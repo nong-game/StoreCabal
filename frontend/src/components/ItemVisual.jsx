@@ -4,40 +4,46 @@ import { Coins, Gem, Bike, Swords, Package } from 'lucide-react';
 const CATEGORY_THEME = {
   Currency: {
     bg: 'from-amber-950/90 via-ink-800 to-gold-600/20',
-    ring: 'border-gold-500/35 bg-gold-500/15 text-gold-400',
-    glow: 'bg-gold-500/20',
+    ring: 'border-gold-500/40 bg-gold-500/15 text-gold-400',
+    glow: 'bg-gold-500/25',
+    art: './game/coin.webp',
+    artContain: true,
     Icon: Coins
   },
   Material: {
     bg: 'from-stone-900 via-ink-800 to-amber-700/20',
-    ring: 'border-amber-500/30 bg-amber-500/15 text-amber-300',
+    ring: 'border-amber-500/35 bg-ink-900/75 text-amber-300',
     glow: 'bg-amber-500/20',
+    art: './game/kv2.webp',
     Icon: Gem
   },
   Vehicle: {
     bg: 'from-blood-900/90 via-ink-800 to-arcane-500/25',
-    ring: 'border-arcane-400/40 bg-arcane-500/15 text-arcane-400',
+    ring: 'border-arcane-400/45 bg-ink-900/75 text-arcane-400',
     glow: 'bg-arcane-500/25',
+    art: './game/kv1.webp',
     Icon: Bike
   },
   Equipment: {
     bg: 'from-red-950/90 via-ink-800 to-arcane-500/20',
-    ring: 'border-arcane-500/35 bg-arcane-600/20 text-arcane-400',
+    ring: 'border-arcane-500/40 bg-ink-900/75 text-arcane-400',
     glow: 'bg-blood-500/30',
+    art: './game/feature1.webp',
     Icon: Swords
   }
 };
 
 const DEFAULT_THEME = {
   bg: 'from-ink-900 via-ink-800 to-blood-900/40',
-  ring: 'border-bone/15 bg-ink-700/80 text-bone',
+  ring: 'border-bone/20 bg-ink-900/75 text-bone',
   glow: 'bg-arcane-500/15',
+  art: './game/kv3.webp',
   Icon: Package
 };
 
 /**
- * Displays an item's uploaded image when available, or a themed dark-fantasy artwork fallback
- * so cards and tables never look empty.
+ * Displays an item's uploaded image when available, or a CABAL Revolution themed artwork fallback
+ * so cards and tables always look vivid.
  */
 export default function ItemVisual({ src, name = '', category = '', size = 'md', className = '' }) {
   const [failed, setFailed] = useState(false);
@@ -59,20 +65,29 @@ export default function ItemVisual({ src, name = '', category = '', size = 'md',
     );
   }
 
-  const iconSize = size === 'sm' ? 18 : size === 'lg' ? 48 : 34;
+  const iconSize = size === 'sm' ? 18 : size === 'lg' ? 44 : 32;
 
   return (
     <div className={`relative overflow-hidden bg-gradient-to-br ${theme.bg} flex items-center justify-center ${className}`}>
-      {/* subtle grid & ambient glow */}
-      <div
-        aria-hidden
-        className="absolute inset-0 opacity-20"
-        style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.22) 1px, transparent 0)', backgroundSize: '16px 16px' }}
-      />
+      {theme.art && !theme.artContain && size !== 'sm' && (
+        <>
+          <img src={theme.art} alt="" aria-hidden loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-35 transition duration-500 group-hover:scale-105" />
+          <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-ink-950/85 via-ink-900/40 to-ink-950/40" />
+        </>
+      )}
       <div aria-hidden className={`absolute h-24 w-24 rounded-full blur-2xl ${theme.glow}`} />
-      <div className={`relative flex items-center justify-center rounded-2xl border backdrop-blur-sm shadow-inner ${size === 'sm' ? 'p-1.5 rounded-lg' : size === 'lg' ? 'p-5' : 'p-3.5'} ${theme.ring}`}>
-        <Icon size={iconSize} strokeWidth={1.75} />
-      </div>
+      {theme.artContain ? (
+        <img
+          src={theme.art}
+          alt={name || category}
+          loading="lazy"
+          className={`relative object-contain drop-shadow-[0_4px_14px_rgba(247,185,85,0.4)] transition duration-500 group-hover:scale-110 ${size === 'sm' ? 'h-7 w-7' : size === 'lg' ? 'h-24 w-24' : 'h-16 w-16'}`}
+        />
+      ) : (
+        <div className={`relative flex items-center justify-center rounded-2xl border backdrop-blur-sm shadow-lg ${size === 'sm' ? 'p-1.5 rounded-lg' : size === 'lg' ? 'p-4' : 'p-3'} ${theme.ring}`}>
+          <Icon size={iconSize} strokeWidth={1.75} />
+        </div>
+      )}
     </div>
   );
 }

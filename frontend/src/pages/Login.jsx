@@ -20,20 +20,22 @@ export default function Login({ onBack }) {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
+      <img src="./game/kv1.webp" alt="" aria-hidden className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-20" />
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-b from-ink-900/75 via-ink-900/85 to-ink-900" />
       {/* animated background orbs */}
-      <div aria-hidden className="pointer-events-none absolute -top-24 -left-24 w-96 h-96 rounded-full bg-arcane-600/25 blur-3xl animate-orb" />
-      <div aria-hidden className="pointer-events-none absolute -bottom-32 -right-24 w-[28rem] h-[28rem] rounded-full bg-gold-500/15 blur-3xl animate-orb [animation-delay:-6s]" />
+      <div aria-hidden className="pointer-events-none absolute -top-24 -left-24 w-96 h-96 rounded-full bg-blood-700/30 blur-3xl animate-orb" />
+      <div aria-hidden className="pointer-events-none absolute -bottom-32 -right-24 w-[28rem] h-[28rem] rounded-full bg-arcane-500/15 blur-3xl animate-orb [animation-delay:-6s]" />
 
-      <form onSubmit={submit} className="card relative w-full max-w-sm p-6 space-y-4 animate-pop-in shadow-2xl shadow-black/40">
+      <form onSubmit={submit} className="card relative w-full max-w-sm p-6 space-y-4 animate-pop-in shadow-2xl shadow-black/60">
         {onBack && (
           <button type="button" onClick={onBack}
-            className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-gold-400 transition">
+            className="inline-flex items-center gap-1.5 text-xs text-ash hover:text-gold-400 transition">
             <ArrowLeft size={14} />กลับหน้าร้านลูกค้า
           </button>
         )}
-        <div className="text-center">
-          <div className="inline-flex p-3 rounded-2xl bg-gradient-to-br from-arcane-600 to-gold-500 mb-3 animate-float shadow-lg shadow-arcane-600/30"><Swords className="text-white" size={28} /></div>
-          <h1 className="text-xl font-display font-bold tracking-wide text-bone">CABAL Revolution</h1>
+        <div className="text-center space-y-2">
+          <img src="./game/logo.webp" alt="CABAL Revolution" className="h-12 w-auto mx-auto object-contain drop-shadow-[0_4px_16px_rgba(230,75,34,0.4)] animate-float" />
+          <h1 className="text-lg font-display font-bold tracking-wide text-bone">CABAL Revolution</h1>
           <p className="text-xs text-ash">ระบบหลังบ้านผู้ฝากขาย & แอดมินร้าน</p>
         </div>
 

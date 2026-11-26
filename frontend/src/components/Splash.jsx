@@ -1,4 +1,3 @@
-import { Swords } from 'lucide-react';
 import { SlowHint } from './ui.jsx';
 
 /** Full-screen branded loader shown while the saved session is being checked. */
@@ -9,10 +8,8 @@ export default function Splash() {
       <div aria-hidden className="pointer-events-none absolute -bottom-32 -right-24 w-[28rem] h-[28rem] rounded-full bg-gold-500/10 blur-3xl animate-orb [animation-delay:-6s]" />
 
       <div className="relative animate-pop-in">
-        <span aria-hidden className="absolute inset-0 rounded-2xl bg-arcane-500/40 blur-xl animate-pulse" />
-        <div className="relative p-4 rounded-2xl bg-gradient-to-br from-arcane-600 to-gold-500 shadow-lg shadow-arcane-600/30 animate-float">
-          <Swords className="text-white" size={36} />
-        </div>
+        <span aria-hidden className="absolute inset-0 rounded-2xl bg-arcane-500/35 blur-2xl animate-pulse" />
+        <img src="./game/logo.webp" alt="CABAL Revolution" className="relative h-16 w-auto object-contain drop-shadow-[0_6px_20px_rgba(230,75,34,0.45)] animate-float" />
       </div>
 
       <div className="text-center space-y-1 animate-fade-up" style={{ animationDelay: '120ms' }}>

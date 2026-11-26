@@ -6,38 +6,6 @@ let uidSeq = 0;
 const uid = (p) => `${p}-${Date.now().toString(36).toUpperCase()}${(uidSeq++).toString(36).toUpperCase()}`;
 const now = () => new Date().toISOString();
 
-function makeShowcaseSvg(title, subtitle, accentA, accentB, glyph) {
-  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540">
-    <defs>
-      <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="#070707"/>
-        <stop offset="55%" stop-color="#11100f"/>
-        <stop offset="100%" stop-color="${accentA}"/>
-      </linearGradient>
-      <radialGradient id="glow" cx="78%" cy="30%" r="48%">
-        <stop offset="0%" stop-color="${accentB}" stop-opacity="0.45"/>
-        <stop offset="100%" stop-color="${accentB}" stop-opacity="0"/>
-      </radialGradient>
-    </defs>
-    <rect width="960" height="540" fill="url(#bg)"/>
-    <rect width="960" height="540" fill="url(#glow)"/>
-    <g opacity="0.12" stroke="#eeeae3" stroke-width="1">
-      <path d="M0 90 H960 M0 180 H960 M0 270 H960 M0 360 H960 M0 450 H960"/>
-      <path d="M160 0 V540 M320 0 V540 M480 0 V540 M640 0 V540 M800 0 V540"/>
-    </g>
-    <circle cx="755" cy="245" r="135" fill="none" stroke="${accentB}" stroke-opacity="0.35" stroke-width="2" stroke-dasharray="10 8"/>
-    <circle cx="755" cy="245" r="95" fill="${accentB}" fill-opacity="0.14" stroke="${accentB}" stroke-opacity="0.65" stroke-width="2"/>
-    <text x="755" y="268" text-anchor="middle" font-family="Cinzel, serif" font-size="68" font-weight="800" fill="${accentB}">${esc(glyph)}</text>
-    <rect x="64" y="135" width="96" height="6" rx="3" fill="${accentB}"/>
-    <text x="64" y="210" font-family="Noto Sans Thai, Inter, sans-serif" font-size="44" font-weight="800" fill="#eeeae3">${esc(title)}</text>
-    <text x="64" y="268" font-family="Noto Sans Thai, Inter, sans-serif" font-size="24" fill="#b4aaa0">${esc(subtitle)}</text>
-    <rect x="64" y="330" width="260" height="44" rx="22" fill="${accentB}" fill-opacity="0.18" stroke="${accentB}" stroke-opacity="0.55"/>
-    <text x="194" y="359" text-anchor="middle" font-family="Noto Sans Thai, Inter, sans-serif" font-size="18" font-weight="700" fill="#eeeae3">CABAL Revolution · พร้อมส่ง</text>
-  </svg>`;
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
-}
-
 const GAME_NAME = 'CABAL Revolution';
 
 const DEFAULT_SETTINGS = {
@@ -54,30 +22,30 @@ function defaultMedia() {
   return [
     {
       media_id: 'M-DEMO1',
-      title: 'รถ RW3 EX 2 ออปชั่นแน่น พร้อมส่ง',
+      title: 'CABAL Revolution · สินค้าพร้อมส่ง',
       caption: 'เช็กจำนวน +11 / +12 ที่มีในคิวตอนนี้ได้ทันที สินค้าอัปเดตตรงจากคลัง',
-      tag: 'สินค้าแนะนำ',
-      image_url: makeShowcaseSvg('รถ RW3 EX 2 พร้อมส่ง', 'เลือกระดับตีบวกและออปชั่นได้ทันทีจากสต็อกจริง', '#641d16', '#ff7138', 'RW3'),
+      tag: 'CABAL Revolution',
+      image_url: './game/kv1.webp',
       sort_order: 1,
       is_active: true,
       created_at: ts
     },
     {
       media_id: 'M-DEMO2',
-      title: 'Alz · Core · ใบกันแตก ส่งไว',
+      title: 'Alz · Core · ใบกันแตก · รถ RW3',
       caption: 'รวมสต็อกผู้ฝากขายหลายร้านในที่เดียว พร้อมโอนในเกมทันทีหลังยืนยันออเดอร์',
-      tag: 'ยอดนิยม',
-      image_url: makeShowcaseSvg('Alz &amp; ใบกันแตกพร้อมส่ง', 'เรทดี ส่งไว เช็กยอดคงเหลือได้ตลอด 24 ชม.', '#3b150e', '#f7b955', 'ALZ'),
+      tag: 'สินค้าแนะนำ',
+      image_url: './game/feature1.webp',
       sort_order: 2,
       is_active: true,
       created_at: ts
     },
     {
       media_id: 'M-DEMO3',
-      title: 'พื้นที่โชว์สินค้า / รูปประกอบร้าน',
-      caption: 'แอดมินสามารถอัปโหลดภาพแคปหน้าจอไอเทม หรือแบนเนอร์โปรโมชั่นมาแทนที่ได้ในเมนู "หน้าร้าน"',
-      tag: 'โปรโมชั่น',
-      image_url: makeShowcaseSvg('CABAL Revolution', 'อัปโหลดรูปสเตตัสไอเทมหรือแบนเนอร์ร้านให้ลูกค้าดูง่าย', '#4a1410', '#e64b22', 'REVO'),
+      title: 'เตรียมพร้อมลุย Mission War',
+      caption: 'แอดมินสามารถอัปโหลดภาพแคปหน้าจอไอเทม หรือแบนเนอร์โปรโมชั่นมาเพิ่มได้ในเมนู "หน้าร้าน"',
+      tag: 'Mission War',
+      image_url: './game/kv2.webp',
       sort_order: 3,
       is_active: true,
       created_at: ts

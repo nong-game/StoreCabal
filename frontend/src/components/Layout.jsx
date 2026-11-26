@@ -1,4 +1,4 @@
-import { LogOut, Swords, Store } from 'lucide-react';
+import { LogOut, Store } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { IS_MOCK } from '../services/api.js';
 
@@ -8,7 +8,7 @@ export default function Layout({ tabs, active, onChange, onOpenStorefront, child
     <div className="min-h-screen flex">
       {/* desktop sidebar */}
       <aside className="hidden md:flex w-60 shrink-0 flex-col border-r border-bone/10 bg-ink-900/80 backdrop-blur p-4 sticky top-0 h-screen animate-fade-in">
-        <div className="flex items-center gap-2 mb-6 text-bone font-display font-bold tracking-wide text-sm"><Swords size={20} className="text-arcane-400 animate-float shrink-0" />CABAL Revolution</div>
+        <div className="flex items-center gap-2 mb-6"><img src="./game/logo.webp" alt="CABAL Revolution" className="h-8 w-auto object-contain" /></div>
         <nav className="space-y-1 flex-1 overflow-y-auto">
           {tabs.map((t, i) => (
             <button key={t.key} onClick={() => onChange(t.key)} style={{ animationDelay: `${i * 50}ms` }}
@@ -35,7 +35,7 @@ export default function Layout({ tabs, active, onChange, onOpenStorefront, child
 
       <div className="flex-1 min-w-0 flex flex-col">
         <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-bone/10 bg-ink-900/90 backdrop-blur sticky top-0 z-30">
-          <div className="flex items-center gap-2 text-bone font-display font-bold text-sm"><Swords size={18} className="text-arcane-400" />CABAL Revolution</div>
+          <img src="./game/logo.webp" alt="CABAL Revolution" className="h-7 w-auto object-contain" />
           <div className="flex items-center gap-2">
             {onOpenStorefront && (
               <button type="button" onClick={onOpenStorefront} className="inline-flex items-center gap-1 rounded-lg border border-gold-500/30 bg-gold-500/10 px-2.5 py-1 text-xs font-medium text-gold-400">

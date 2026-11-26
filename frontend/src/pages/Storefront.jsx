@@ -1,12 +1,43 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Swords, LogIn, RefreshCw, Search, Sparkles, PackageCheck, Layers, Gamepad2,
+  LogIn, RefreshCw, Search, Sparkles, PackageCheck, Layers, Gamepad2,
   ChevronLeft, ChevronRight, Maximize2, X, Copy, Check, MessageCircle, ArrowLeft, ShoppingBag
 } from 'lucide-react';
 import { api, IS_MOCK } from '../services/api.js';
 import { Button, Empty, ErrorBox, QtyInput, Spinner, useAsync, useToast } from '../components/ui.jsx';
 import ItemVisual from '../components/ItemVisual.jsx';
 import { fmtGame, fmtNum } from '../utils/format.js';
+
+const BUILTIN_GAME_MEDIA = [
+  {
+    media_id: 'GAME-1',
+    title: 'CABAL Revolution · ตลาดไอเทมพร้อมส่ง',
+    caption: 'เช็กสต็อกไอเทมพร้อมส่งแบบเรียลไทม์ จากผู้ฝากขายในเกม CABAL Revolution',
+    tag: 'CABAL Revolution',
+    image_url: './game/kv1.webp'
+  },
+  {
+    media_id: 'GAME-2',
+    title: 'อาวุธ · ชุดเกราะ · รถ RW3 ออปชั่นแน่น',
+    caption: 'เลือกดูรุ่นและค่าตีบวกที่มีในคิวตอนนี้ กดคัดลอกออเดอร์ส่งแอดมินได้ทันที',
+    tag: 'สินค้าแนะนำ',
+    image_url: './game/feature1.webp'
+  },
+  {
+    media_id: 'GAME-3',
+    title: 'Alz · Upgrade Core · ใบกันแตก',
+    caption: 'สต็อกเข้าใหม่ต่อเนื่อง ระบบคิวโปร่งใส พร้อมส่งทันทีหลังแอดมินยืนยัน',
+    tag: 'พร้อมส่ง',
+    image_url: './game/kv2.webp'
+  },
+  {
+    media_id: 'GAME-4',
+    title: 'เตรียมตัวลุย Mission War',
+    caption: 'เติมของและอุปกรณ์ให้พร้อมก่อนลงสนามรบ · แอดมินเพิ่มรูปโชว์สินค้าเองได้ในเมนู "หน้าร้าน"',
+    tag: 'Mission War',
+    image_url: './game/kv3.webp'
+  }
+];
 
 function ContactChip({ label, value, tone }) {
   const toast = useToast();
@@ -40,7 +71,8 @@ export default function Storefront({ onLoginClick, onBackToPortal, isLoggedIn = 
   const [lightbox, setLightbox] = useState(null); // { image_url, title, caption, tag }
   const [detail, setDetail] = useState(null);     // item object
 
-  const media = data?.media || [];
+  const rawMedia = data?.media || [];
+  const media = rawMedia.length ? rawMedia : BUILTIN_GAME_MEDIA;
   const items = data?.items || [];
   const settings = data?.settings || {};
   const rawStats = data?.stats || { total_available: 0, item_types_in_stock: 0, total_items: 0, server: 'CABAL Revolution' };
@@ -82,11 +114,9 @@ export default function Storefront({ onLoginClick, onBackToPortal, isLoggedIn = 
       {/* Top Navbar */}
       <header className="sticky top-0 z-30 border-b border-ink-700/90 bg-ink-900/85 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-arcane-600 to-gold-500 shadow-lg shadow-arcane-600/20 shrink-0">
-              <Swords size={20} className="text-white" />
-            </div>
-            <div className="min-w-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <img src="./game/logo.webp" alt="CABAL Revolution" className="h-9 sm:h-10 w-auto object-contain shrink-0 drop-shadow-[0_2px_10px_rgba(230,75,34,0.35)]" />
+            <div className="min-w-0 border-l border-bone/15 pl-3">
               <div className="flex items-center gap-2">
                 <span className="font-display font-bold tracking-wide text-bone truncate">{settings.shop_title || 'CABAL Revolution Shop'}</span>
                 <span className="hidden sm:inline-flex items-center gap-1 rounded-full border border-arcane-400/35 bg-arcane-600/15 px-2.5 py-0.5 text-[10px] font-semibold text-arcane-400">
@@ -130,7 +160,9 @@ export default function Storefront({ onLoginClick, onBackToPortal, isLoggedIn = 
             <section className="grid lg:grid-cols-[1.05fr_1.35fr] gap-5 items-stretch animate-fade-up">
               {/* Left: Store Info & Live Stats */}
               <div className="card p-5 sm:p-6 flex flex-col justify-between gap-5 relative overflow-hidden">
-                <div aria-hidden className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-arcane-600/15 blur-3xl" />
+                <img src="./game/kv1.webp" alt="" aria-hidden className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-20 scale-105" />
+                <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-br from-ink-900/95 via-ink-800/85 to-blood-900/70" />
+                <div aria-hidden className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-arcane-600/20 blur-3xl" />
                 <div className="space-y-3 relative">
                   <div className="inline-flex items-center gap-1.5 rounded-full border border-arcane-400/35 bg-arcane-600/15 px-3 py-1 text-[11px] font-semibold text-arcane-400">
                     <Sparkles size={12} />สต็อกอัปเดตสดจากคิวขายร้าน
