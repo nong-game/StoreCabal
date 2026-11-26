@@ -113,16 +113,25 @@ export const Field = ({ label, children, hint }) => (
 export function QtyInput({ value, onChange, min = 1, max, showMax = true }) {
   const n = Math.floor(Number(value)) || min;
   const clamp = (v) => Math.max(min, max != null ? Math.min(v, max) : v);
-  const step = 'w-10 shrink-0 inline-flex items-center justify-center rounded-lg bg-ink-700 hover:bg-ink-600 border border-ink-600 text-slate-200 transition active:scale-90 disabled:opacity-40 disabled:cursor-not-allowed';
+  const step = 'w-9 shrink-0 inline-flex items-center justify-center rounded-lg bg-ink-700 hover:bg-ink-600 border border-ink-600 text-slate-200 transition active:scale-90 disabled:opacity-40 disabled:cursor-not-allowed';
   return (
     <div className="flex items-stretch gap-1.5">
       <button type="button" className={step} aria-label="ลด" disabled={n <= min} onClick={() => onChange(clamp(n - 1))}><Minus size={16} /></button>
-      <input type="number" inputMode="numeric" min={min} max={max} required value={value} className="!text-center font-semibold tabular-nums"
-        onChange={(e) => onChange(e.target.value === '' ? '' : clamp(Math.floor(Number(e.target.value)) || min))} onBlur={() => onChange(clamp(n))} />
+      <input
+        type="number"
+        inputMode="numeric"
+        min={min}
+        max={max}
+        required
+        value={value}
+        className="min-w-[3.25rem] flex-1 !px-1.5 !text-center font-semibold tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        onChange={(e) => onChange(e.target.value === '' ? '' : clamp(Math.floor(Number(e.target.value)) || min))}
+        onBlur={() => onChange(clamp(n))}
+      />
       <button type="button" className={step} aria-label="เพิ่ม" disabled={max != null && n >= max} onClick={() => onChange(clamp(n + 1))}><Plus size={16} /></button>
       {max != null && showMax && (
         <button type="button" disabled={n >= max} onClick={() => onChange(max)}
-          className="shrink-0 px-3 rounded-lg text-xs font-semibold bg-gold-500/15 hover:bg-gold-500/25 border border-gold-500/40 text-gold-400 transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed">Max</button>
+          className="shrink-0 px-2.5 rounded-lg text-xs font-semibold bg-gold-500/15 hover:bg-gold-500/25 border border-gold-500/40 text-gold-400 transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed">Max</button>
       )}
     </div>
   );

@@ -6,6 +6,83 @@ let uidSeq = 0;
 const uid = (p) => `${p}-${Date.now().toString(36).toUpperCase()}${(uidSeq++).toString(36).toUpperCase()}`;
 const now = () => new Date().toISOString();
 
+function makeShowcaseSvg(title, subtitle, accentA, accentB, glyph) {
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540">
+    <defs>
+      <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#0b0f19"/>
+        <stop offset="55%" stop-color="#151d30"/>
+        <stop offset="100%" stop-color="${accentA}"/>
+      </linearGradient>
+      <radialGradient id="glow" cx="78%" cy="30%" r="48%">
+        <stop offset="0%" stop-color="${accentB}" stop-opacity="0.45"/>
+        <stop offset="100%" stop-color="${accentB}" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect width="960" height="540" fill="url(#bg)"/>
+    <rect width="960" height="540" fill="url(#glow)"/>
+    <g opacity="0.14" stroke="#94a3b8" stroke-width="1">
+      <path d="M0 90 H960 M0 180 H960 M0 270 H960 M0 360 H960 M0 450 H960"/>
+      <path d="M160 0 V540 M320 0 V540 M480 0 V540 M640 0 V540 M800 0 V540"/>
+    </g>
+    <circle cx="755" cy="245" r="135" fill="none" stroke="${accentB}" stroke-opacity="0.35" stroke-width="2" stroke-dasharray="10 8"/>
+    <circle cx="755" cy="245" r="95" fill="${accentB}" fill-opacity="0.12" stroke="${accentB}" stroke-opacity="0.6" stroke-width="2"/>
+    <text x="755" y="268" text-anchor="middle" font-family="sans-serif" font-size="76" font-weight="700" fill="${accentB}">${esc(glyph)}</text>
+    <rect x="64" y="135" width="96" height="6" rx="3" fill="${accentB}"/>
+    <text x="64" y="210" font-family="Noto Sans Thai, Inter, sans-serif" font-size="44" font-weight="800" fill="#f8fafc">${esc(title)}</text>
+    <text x="64" y="268" font-family="Noto Sans Thai, Inter, sans-serif" font-size="24" fill="#cbd5e1">${esc(subtitle)}</text>
+    <rect x="64" y="330" width="240" height="44" rx="22" fill="${accentB}" fill-opacity="0.18" stroke="${accentB}" stroke-opacity="0.5"/>
+    <text x="184" y="359" text-anchor="middle" font-family="Noto Sans Thai, Inter, sans-serif" font-size="18" font-weight="700" fill="#fde68a">เช็กสต็อกสด · พร้อมส่ง</text>
+  </svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+const DEFAULT_SETTINGS = {
+  shop_title: 'Cabal Stock Shop',
+  shop_subtitle: 'เช็กสต็อกไอเทมพร้อมส่งแบบเรียลไทม์ จากผู้ฝากขายในเซิร์ฟเวอร์',
+  notice_text: 'สนใจชิ้นไหน กดดูรายละเอียดแล้วคัดลอกข้อความส่งให้แอดมินได้เลย',
+  contact_facebook: '',
+  contact_line: '',
+  contact_discord: ''
+};
+
+function defaultMedia() {
+  const ts = now();
+  return [
+    {
+      media_id: 'M-DEMO1',
+      title: 'รถ RW3 EX 2 ออปชั่นแน่น พร้อมส่ง',
+      caption: 'เช็กจำนวน +11 / +12 ที่มีในคิวตอนนี้ได้ทันที สินค้าอัปเดตตรงจากคลัง',
+      tag: 'สินค้าแนะนำ',
+      image_url: makeShowcaseSvg('รถ RW3 EX 2 พร้อมส่ง', 'เลือกระดับตีบวกและออปชั่นได้ทันทีจากสต็อกจริง', '#3b1d5e', '#fbbf24', 'RW3'),
+      sort_order: 1,
+      is_active: true,
+      created_at: ts
+    },
+    {
+      media_id: 'M-DEMO2',
+      title: 'Alz · Core · ใบกันแตก ส่งไว',
+      caption: 'รวมสต็อกผู้ฝากขายหลายร้านในที่เดียว พร้อมโอนในเกมทันทีหลังยืนยันออเดอร์',
+      tag: 'ยอดนิยม',
+      image_url: makeShowcaseSvg('Alz &amp; ใบกันแตกพร้อมส่ง', 'เรทดี ส่งไว เช็กยอดคงเหลือได้ตลอด 24 ชม.', '#0f3460', '#38bdf8', 'ALZ'),
+      sort_order: 2,
+      is_active: true,
+      created_at: ts
+    },
+    {
+      media_id: 'M-DEMO3',
+      title: 'พื้นที่โชว์สินค้า / รูปประกอบร้าน',
+      caption: 'แอดมินสามารถอัปโหลดภาพแคปหน้าจอไอเทม หรือแบนเนอร์โปรโมชั่นมาแทนที่ได้ในเมนู "หน้าร้าน"',
+      tag: 'โปรโมชั่น',
+      image_url: makeShowcaseSvg('อัปโหลดรูปโชว์สินค้าได้', 'โชว์สเตตัสไอเทมหรือแบนเนอร์ร้านให้ลูกค้าดูง่าย', '#1f2937', '#a78bfa', '★'),
+      sort_order: 3,
+      is_active: true,
+      created_at: ts
+    }
+  ];
+}
+
 function seed() {
   const t0 = Date.now() - 1000 * 60 * 60 * 24;
   const users = [
@@ -14,9 +91,14 @@ function seed() {
     { user_id: 'U-S2', username: 'supplier2', password: 'supplier1234', shop_name: 'ร้านเทพเจ้า', role: 'supplier', status: 'active', created_at: now() }
   ];
   const items = [];
-  [['Alz', 'Currency', false], ['Upgrade Core', 'Material', false], ['Safeguard (ใบกันแตก)', 'Material', false], ['รถ RW3 EX 2 (มีออปชั่น)', 'Vehicle', true], ['Weapon / Armor (มีออปชั่น)', 'Equipment', true]]
-    .forEach(([item_name, category, has_custom_option], j) =>
-      items.push({ item_id: `I-${j + 1}`, item_name, category, server: 'Server 1', has_custom_option, is_active: true }));
+  [
+    ['Alz', 'Currency', false, 'สกุลเงินหลักสำหรับซื้อขายในเกม'],
+    ['Upgrade Core', 'Material', false, 'หินอัปเกรดอุปกรณ์'],
+    ['Safeguard (ใบกันแตก)', 'Material', false, 'ใบป้องกันไอเทมแตกเวลาตีบวก'],
+    ['รถ RW3 EX 2 (มีออปชั่น)', 'Vehicle', true, 'มอเตอร์ไซค์ยอดนิยม เลือกระดับ EX และ + ได้'],
+    ['Weapon / Armor (มีออปชั่น)', 'Equipment', true, 'อาวุธและชุดเกราะคัดออปชั่น']
+  ].forEach(([item_name, category, has_custom_option, description], j) =>
+    items.push({ item_id: `I-${j + 1}`, item_name, category, server: 'Server 1', has_custom_option, is_active: true, image_url: '', description }));
   const stock = [];
   let n = 0;
   const add = (supplier_id, item_id, server, count, note = '', stocked = false) => {
@@ -32,14 +114,31 @@ function seed() {
   add('U-S2', 'I-4', 'Server 1', 1, 'EX 2 +11'); add('U-S1', 'I-4', 'Server 1', 1, 'EX 2 +12');
   add('U-S2', 'I-3', 'Server 1', 3);
   add('U-S1', 'I-1', 'Server 1', 11, '', true); // 11 pieces sitting in the warehouse, not queued
-  return { users, items, stock, logs: [] };
+  return { users, items, stock, logs: [], media: defaultMedia(), settings: { ...DEFAULT_SETTINGS } };
 }
 
 function load() {
-  try { const raw = localStorage.getItem(KEY); if (raw) return JSON.parse(raw); } catch { /* fall through */ }
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      const db = JSON.parse(raw);
+      let dirty = false;
+      if (!Array.isArray(db.media)) { db.media = defaultMedia(); dirty = true; }
+      if (!db.settings) { db.settings = { ...DEFAULT_SETTINGS }; dirty = true; }
+      (db.items || []).forEach((it) => {
+        if (it.image_url === undefined) { it.image_url = ''; dirty = true; }
+        if (it.description === undefined) { it.description = ''; dirty = true; }
+      });
+      if (dirty) save(db);
+      return db;
+    }
+  } catch { /* fall through */ }
   const db = seed(); save(db); return db;
 }
-function save(db) { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch { /* ignore */ } }
+function save(db) {
+  try { localStorage.setItem(KEY, JSON.stringify(db)); }
+  catch (e) { throw new E('พื้นที่จัดเก็บรูปในเบราว์เซอร์เต็ม กรุณาลบรูปเก่าหรือลดขนาดรูป'); }
+}
 export function resetMock() { try { localStorage.removeItem(KEY); } catch { /* ignore */ } }
 
 class E extends Error { constructor(m, code = 'BAD_REQUEST') { super(m); this.code = code; } }
@@ -289,10 +388,44 @@ const H = {
     });
     return { updated: uids, status: p.to };
   },
+  public_catalog(db) {
+    const avail = db.stock.filter((s) => s.status === 'AVAILABLE');
+    const counts = {}; const variants = {};
+    avail.forEach((s) => {
+      counts[s.item_id] = (counts[s.item_id] || 0) + 1;
+      const k = norm(s.custom_note);
+      const map = (variants[s.item_id] ||= {});
+      const v = (map[k] ||= { variant: s.custom_note || '', count: 0 });
+      v.count++;
+    });
+    const catalog = db.items.filter((i) => i.is_active).map((it) => {
+      const list = variants[it.item_id] ? Object.values(variants[it.item_id]).sort((a, b) => b.count - a.count || a.variant.localeCompare(b.variant)) : [];
+      return {
+        item_id: it.item_id,
+        item_name: it.item_name,
+        category: it.category || '',
+        server: it.server,
+        has_custom_option: !!it.has_custom_option,
+        image_url: it.image_url || '',
+        description: it.description || '',
+        available_count: counts[it.item_id] || 0,
+        variants: it.has_custom_option ? list : []
+      };
+    });
+    const media = (db.media || []).filter((m) => m.is_active).sort((a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0) || (a.created_at < b.created_at ? 1 : -1));
+    return {
+      settings: { ...DEFAULT_SETTINGS, ...(db.settings || {}) },
+      media,
+      items: catalog,
+      stats: { total_available: avail.length, item_types_in_stock: catalog.filter((c) => c.available_count > 0).length, total_items: catalog.length, server: 'Server 1' }
+    };
+  },
   item_upsert(db, p) {
     const item_name = String(p.item_name || '').trim(); const server = 'Server 1';
     if (!item_name) throw new E('ต้องระบุชื่อไอเทม');
     const data = { item_name, category: String(p.category || '').trim(), server, has_custom_option: !!p.has_custom_option };
+    if (p.image_url !== undefined) data.image_url = String(p.image_url || '').trim();
+    if (p.description !== undefined) data.description = String(p.description || '').trim().slice(0, 300);
     if (p.item_id) {
       const it = db.items.find((i) => i.item_id === p.item_id); if (!it) throw new E('ไม่พบไอเทม', 'NOT_FOUND');
       const live = db.stock.some((s) => s.item_id === it.item_id && ['AVAILABLE', 'RESERVED'].includes(s.status) && norm(s.custom_note) !== '');
@@ -300,11 +433,49 @@ const H = {
       Object.assign(it, data); return it;
     }
     if (db.items.some((i) => i.item_name === item_name && i.server === server)) throw new E('มีไอเทมนี้ใน Server นี้แล้ว', 'CONFLICT');
-    const row = { item_id: uid('I'), ...data, is_active: true }; db.items.push(row); return row;
+    const row = { item_id: uid('I'), image_url: '', description: '', ...data, is_active: true }; db.items.push(row); return row;
   },
   item_toggle(db, p) {
     const it = db.items.find((i) => i.item_id === p.item_id); if (!it) throw new E('ไม่พบไอเทม', 'NOT_FOUND');
     it.is_active = !!p.is_active; return it;
+  },
+  media_list(db) {
+    return [...(db.media || [])].sort((a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0) || (a.created_at < b.created_at ? 1 : -1));
+  },
+  media_upsert(db, p) {
+    const title = String(p.title || '').trim().slice(0, 120);
+    if (!title) throw new E('ต้องระบุหัวข้อรูปภาพ');
+    const image_url = String(p.image_url || '').trim();
+    if (!image_url) throw new E('กรุณาอัปโหลดรูปหรือใส่ลิงก์รูปภาพ');
+    const payload = {
+      title,
+      caption: String(p.caption || '').trim().slice(0, 240),
+      tag: String(p.tag || '').trim().slice(0, 40),
+      image_url,
+      sort_order: Number(p.sort_order) || 0,
+      is_active: p.is_active === undefined ? true : !!p.is_active
+    };
+    db.media ||= [];
+    if (p.media_id) {
+      const m = db.media.find((x) => x.media_id === p.media_id);
+      if (!m) throw new E('ไม่พบรูปโชว์นี้', 'NOT_FOUND');
+      Object.assign(m, payload); return m;
+    }
+    const row = { media_id: uid('M'), ...payload, created_at: now() };
+    db.media.push(row); return row;
+  },
+  media_delete(db, p) {
+    const before = (db.media || []).length;
+    db.media = (db.media || []).filter((x) => x.media_id !== p.media_id);
+    if (db.media.length === before) throw new E('ไม่พบรูปโชว์นี้', 'NOT_FOUND');
+    return { deleted: p.media_id };
+  },
+  storefront_settings_save(db, p) {
+    db.settings = { ...DEFAULT_SETTINGS, ...(db.settings || {}) };
+    Object.keys(DEFAULT_SETTINGS).forEach((k) => {
+      if (p[k] !== undefined) db.settings[k] = String(p[k] || '').trim().slice(0, 300);
+    });
+    return db.settings;
   },
   user_list: (db) => db.users.map(pub),
   user_create(db, p) {
@@ -336,12 +507,14 @@ const ROLES = {
   supplier_dashboard: ['supplier'], add_stock: ['supplier'], my_stock: ['supplier'], withdraw: ['supplier'], enqueue: ['supplier'], unqueue: ['supplier']
 };
 
+const PUBLIC_ACTIONS = new Set(['login', 'public_catalog']);
+
 export async function mockCall({ action, payload, token }) {
   await delay();
   try {
     const fn = H[action]; if (!fn) throw new E('Unknown action', 'NOT_FOUND');
     const db = load();
-    const roles = action === 'login' ? null : (ROLES[action] || ['admin']);
+    const roles = PUBLIC_ACTIONS.has(action) ? null : (ROLES[action] || ['admin']);
     const actor = roles ? auth(db, token, roles) : null;
     const data = fn(db, payload || {}, actor);
     save(db);

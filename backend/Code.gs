@@ -28,20 +28,33 @@ var CONFIG = {
 };
 
 var SCHEMA = {
-  Users:        ['user_id', 'username', 'password_hash', 'shop_name', 'role', 'status', 'created_at'],
-  Master_Items: ['item_id', 'item_name', 'category', 'server', 'has_custom_option', 'is_active'],
-  Stock_Items:  ['stock_uid', 'item_id', 'server', 'supplier_id', 'custom_note', 'price_cost', 'status', 'created_at', 'updated_at', 'order_ref', 'lot_id', 'queued_at'],
-  Queue_Logs:   ['log_id', 'stock_uid', 'action', 'actor_id', 'timestamp', 'note']
+  Users:               ['user_id', 'username', 'password_hash', 'shop_name', 'role', 'status', 'created_at'],
+  Master_Items:        ['item_id', 'item_name', 'category', 'server', 'has_custom_option', 'is_active', 'image_url', 'description'],
+  Stock_Items:         ['stock_uid', 'item_id', 'server', 'supplier_id', 'custom_note', 'price_cost', 'status', 'created_at', 'updated_at', 'order_ref', 'lot_id', 'queued_at'],
+  Queue_Logs:          ['log_id', 'stock_uid', 'action', 'actor_id', 'timestamp', 'note'],
+  Storefront_Media:    ['media_id', 'title', 'caption', 'tag', 'image_url', 'sort_order', 'is_active', 'created_at'],
+  Storefront_Settings: ['key', 'value']
 };
 // Columns that must stay text (ISO timestamps / ids) so Sheets never auto-converts them
 var TEXT_COLS = {
   Users: ['user_id', 'username', 'password_hash', 'created_at'],
-  Master_Items: ['item_id'],
+  Master_Items: ['item_id', 'image_url', 'description'],
   Stock_Items: ['stock_uid', 'item_id', 'supplier_id', 'created_at', 'updated_at', 'order_ref', 'lot_id', 'queued_at'],
-  Queue_Logs: ['log_id', 'stock_uid', 'actor_id', 'timestamp']
+  Queue_Logs: ['log_id', 'stock_uid', 'actor_id', 'timestamp'],
+  Storefront_Media: ['media_id', 'title', 'caption', 'tag', 'image_url', 'created_at'],
+  Storefront_Settings: ['key', 'value']
 };
-var BOOL_COLS = { Master_Items: ['has_custom_option', 'is_active'] };
-var NUM_COLS = { Stock_Items: ['price_cost'] };
+var BOOL_COLS = { Master_Items: ['has_custom_option', 'is_active'], Storefront_Media: ['is_active'] };
+var NUM_COLS = { Stock_Items: ['price_cost'], Storefront_Media: ['sort_order'] };
+
+var DEFAULT_STOREFRONT_SETTINGS = {
+  shop_title: 'Cabal Stock Shop',
+  shop_subtitle: 'เช็กสต็อกไอเทมพร้อมส่งแบบเรียลไทม์ จากผู้ฝากขายในเซิร์ฟเวอร์',
+  notice_text: 'สนใจชิ้นไหน กดดูรายละเอียดแล้วคัดลอกข้อความส่งให้แอดมินได้เลย',
+  contact_facebook: '',
+  contact_line: '',
+  contact_discord: ''
+};
 
 var STATUS = { STOCKED: 'STOCKED', AVAILABLE: 'AVAILABLE', RESERVED: 'RESERVED', SOLD: 'SOLD', WITHDRAWN: 'WITHDRAWN' };
 
@@ -129,9 +142,9 @@ function createAdminUser() {
 function seedMasterItemsIfEmpty_() {
   if (Db.all('Master_Items').length) return;
   var rows = [];
-  [['Alz', 'Currency', false], ['Upgrade Core', 'Material', false], ['Safeguard (ใบกันแตก)', 'Material', false],
-   ['รถ RW3 EX 2 (มีออปชั่น)', 'Vehicle', true], ['Weapon / Armor (มีออปชั่น)', 'Equipment', true]].forEach(function (x, j) {
-    rows.push({ item_id: 'I-' + (j + 1), item_name: x[0], category: x[1], server: CONFIG.SERVER_NAME, has_custom_option: x[2], is_active: true });
+  [['Alz', 'Currency', false, 'สกุลเงินหลักสำหรับซื้อขายในเกม'], ['Upgrade Core', 'Material', false, 'หินอัปเกรดอุปกรณ์'], ['Safeguard (ใบกันแตก)', 'Material', false, 'ใบป้องกันไอเทมแตกเวลาตีบวก'],
+   ['รถ RW3 EX 2 (มีออปชั่น)', 'Vehicle', true, 'มอเตอร์ไซค์ยอดนิยม เลือกระดับ EX และ + ได้'], ['Weapon / Armor (มีออปชั่น)', 'Equipment', true, 'อาวุธและชุดเกราะคัดออปชั่น']].forEach(function (x, j) {
+    rows.push({ item_id: 'I-' + (j + 1), item_name: x[0], category: x[1], server: CONFIG.SERVER_NAME, has_custom_option: x[2], is_active: true, image_url: '', description: x[3] });
   });
   Db.append('Master_Items', rows);
 }
@@ -139,7 +152,10 @@ function seedMasterItemsIfEmpty_() {
 /* ============================== DB LAYER ============================== */
 var Db = {
   _mem: {},                                   // per-execution memo of raw sheet values (one getValues per sheet per request)
-  CACHED: { Users: true, Master_Items: true }, // small, read-mostly sheets are also cached across requests (60 s, cleared on every write)
+  CACHED: { Users: true, Master_Items: true, Storefront_Media: true, Storefront_Settings: true }, // small, read-mostly sheets are also cached across requests (60 s, cleared on every write)
+  hasSheet: function (name) {
+    return !!SpreadsheetApp.getActiveSpreadsheet().getSheetByName(name);
+  },
   sheet: function (name) {
     var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(name);
     if (!sh) throw ApiError_('Sheet "' + name + '" missing – run setupDatabase()', 'NOT_SETUP');
@@ -153,8 +169,8 @@ var Db = {
       if (hit) { try { vals = JSON.parse(hit); } catch (e) { vals = null; } }
     }
     if (!vals) {
-      var sh = this.sheet(name), last = sh.getLastRow();
-      vals = last < 2 ? [] : sh.getRange(2, 1, last - 1, SCHEMA[name].length).getValues();
+      var sh = this.sheet(name), last = sh.getLastRow(), cols = Math.min(SCHEMA[name].length, sh.getMaxColumns());
+      vals = last < 2 || cols < 1 ? [] : sh.getRange(2, 1, last - 1, cols).getValues();
       if (cache) { try { cache.put('db:' + name, JSON.stringify(vals), 60); } catch (e) { /* >100KB: skip cache */ } }
     }
     this._mem[name] = vals;
@@ -171,7 +187,7 @@ var Db = {
     return vals.map(function (r, i) {
       var o = { _row: i + 2 };
       headers.forEach(function (h, c) {
-        var v = r[c];
+        var v = c < r.length ? r[c] : '';
         if (bools.indexOf(h) >= 0) v = (v === true || String(v).toUpperCase() === 'TRUE');
         else if (nums.indexOf(h) >= 0) v = Number(v) || 0;
         else if (v instanceof Date) v = v.toISOString();
@@ -193,6 +209,11 @@ var Db = {
   writeRow: function (name, rowNo, obj) {
     var headers = SCHEMA[name];
     this.sheet(name).getRange(rowNo, 1, 1, headers.length).setValues([headers.map(function (h) { return sanitize_(obj[h]); })]);
+    this.invalidate(name);
+  },
+  /** Deletes a single 1-based sheet row */
+  deleteRow: function (name, rowNo) {
+    this.sheet(name).deleteRow(rowNo);
     this.invalidate(name);
   }
 };
@@ -253,6 +274,7 @@ var Router = {
   routes: function () {
     return {
       login:                [Service.login, null, false],
+      public_catalog:       [Service.publicCatalog, null, false],
       me:                   [Service.me, ['admin', 'supplier'], false],
       change_password:      [Service.changePassword, ['admin', 'supplier'], true],
       master_items:         [Service.masterItems, ['admin', 'supplier'], false],
@@ -265,20 +287,24 @@ var Router = {
       enqueue:              [Service.enqueue, ['supplier'], true],
       unqueue:              [Service.unqueue, ['supplier'], true],
 
-      admin_overview:       [Service.adminOverview, ['admin'], false],
-      fifo_preview:         [Service.fifoPreview, ['admin'], false],
-      fifo_confirm:         [Service.fifoConfirm, ['admin'], true],
-      queue_board:          [Service.queueBoard, ['admin'], false],
-      queue_move:           [Service.queueMove, ['admin'], true],
-      lot_update:           [Service.lotUpdate, ['admin'], true],
-      order_list:           [Service.orderList, ['admin'], false],
-      order_update:         [Service.orderUpdate, ['admin'], true],
-      item_upsert:          [Service.itemUpsert, ['admin'], true],
-      item_toggle:          [Service.itemToggle, ['admin'], true],
-      user_list:            [Service.userList, ['admin'], false],
-      user_create:          [Service.userCreate, ['admin'], true],
-      user_update:          [Service.userUpdate, ['admin'], true],
-      logs_list:            [Service.logsList, ['admin'], false]
+      admin_overview:           [Service.adminOverview, ['admin'], false],
+      fifo_preview:             [Service.fifoPreview, ['admin'], false],
+      fifo_confirm:             [Service.fifoConfirm, ['admin'], true],
+      queue_board:              [Service.queueBoard, ['admin'], false],
+      queue_move:               [Service.queueMove, ['admin'], true],
+      lot_update:               [Service.lotUpdate, ['admin'], true],
+      order_list:               [Service.orderList, ['admin'], false],
+      order_update:             [Service.orderUpdate, ['admin'], true],
+      item_upsert:              [Service.itemUpsert, ['admin'], true],
+      item_toggle:              [Service.itemToggle, ['admin'], true],
+      media_list:               [Service.mediaList, ['admin'], false],
+      media_upsert:             [Service.mediaUpsert, ['admin'], true],
+      media_delete:             [Service.mediaDelete, ['admin'], true],
+      storefront_settings_save: [Service.storefrontSettingsSave, ['admin'], true],
+      user_list:                [Service.userList, ['admin'], false],
+      user_create:              [Service.userCreate, ['admin'], true],
+      user_update:              [Service.userUpdate, ['admin'], true],
+      logs_list:                [Service.logsList, ['admin'], false]
     };
   },
   dispatch: function (body) {
@@ -720,11 +746,53 @@ var Service = {
     return { updated: uids, status: to };
   },
 
+  /* ---------- public storefront (walk-in customers, no auth, zero supplier PII) ---------- */
+  publicCatalog: function () {
+    var items = Db.all('Master_Items').filter(function (i) { return i.is_active; }).map(stripRow_);
+    var avail = Db.all('Stock_Items').filter(function (s) { return s.status === STATUS.AVAILABLE; });
+    var counts = {}, variants = {};
+    avail.forEach(function (s) {
+      counts[s.item_id] = (counts[s.item_id] || 0) + 1;
+      var k = normNote_(s.custom_note);
+      var map = variants[s.item_id] = variants[s.item_id] || {};
+      var v = map[k] = map[k] || { variant: s.custom_note || '', count: 0 };
+      v.count++;
+    });
+    var catalog = items.map(function (it) {
+      var list = variants[it.item_id] ? Object.keys(variants[it.item_id]).map(function (k) { return variants[it.item_id][k]; }) : [];
+      list.sort(function (a, b) { return b.count - a.count || a.variant.localeCompare(b.variant); });
+      return {
+        item_id: it.item_id,
+        item_name: it.item_name,
+        category: it.category || '',
+        server: it.server,
+        has_custom_option: !!it.has_custom_option,
+        image_url: it.image_url || '',
+        description: it.description || '',
+        available_count: counts[it.item_id] || 0,
+        variants: it.has_custom_option ? list : []
+      };
+    });
+    var media = Db.hasSheet('Storefront_Media')
+      ? Db.all('Storefront_Media').filter(function (m) { return m.is_active; }).sort(mediaCmp_).map(stripRow_)
+      : [];
+    var settings = readStorefrontSettings_();
+    var inStockTypes = catalog.filter(function (c) { return c.available_count > 0; }).length;
+    return {
+      settings: settings,
+      media: media,
+      items: catalog,
+      stats: { total_available: avail.length, item_types_in_stock: inStockTypes, total_items: catalog.length, server: CONFIG.SERVER_NAME }
+    };
+  },
+
   /* ---------- admin: master items ---------- */
   itemUpsert: function (p) {
     var name = str_(p.item_name).slice(0, 100), server = CONFIG.SERVER_NAME;
     if (!name) throw ApiError_('ต้องระบุชื่อไอเทม');
     var items = Db.all('Master_Items');
+    var img = p.image_url !== undefined ? resolveImageInput_(p.image_url, 'item') : null;
+    var desc = p.description !== undefined ? str_(p.description).slice(0, 300) : null;
     var data = { item_name: name, category: str_(p.category).slice(0, 50), server: server, has_custom_option: !!p.has_custom_option };
     if (p.item_id) {
       var it = items.filter(function (i) { return i.item_id === p.item_id; })[0];
@@ -736,13 +804,15 @@ var Service = {
       if (it.has_custom_option && !data.has_custom_option && hasVariantStock)
         throw ApiError_('ยังมีสต็อกที่ระบุรุ่นอยู่ ปิดการแยกรุ่นไม่ได้ (ต้องขาย/ถอนของเหล่านั้นก่อน)');
       Object.keys(data).forEach(function (k) { it[k] = data[k]; });
+      if (img !== null) it.image_url = img;
+      if (desc !== null) it.description = desc;
       Db.writeRow('Master_Items', it._row, it);
       return stripRow_(it);
     }
     var dup = items.some(function (i) { return i.item_name === name && i.server === server; });
     if (dup) throw ApiError_('มีไอเทมนี้ใน Server นี้แล้ว', 'CONFLICT');
     var row = { item_id: newUid_('I'), item_name: data.item_name, category: data.category, server: data.server,
-      has_custom_option: data.has_custom_option, is_active: true };
+      has_custom_option: data.has_custom_option, is_active: true, image_url: img || '', description: desc || '' };
     Db.append('Master_Items', [row]);
     return row;
   },
@@ -752,6 +822,60 @@ var Service = {
     it.is_active = !!p.is_active;
     Db.writeRow('Master_Items', it._row, it);
     return stripRow_(it);
+  },
+
+  /* ---------- admin: storefront media & settings ---------- */
+  mediaList: function () {
+    return Db.all('Storefront_Media').sort(mediaCmp_).map(stripRow_);
+  },
+  mediaUpsert: function (p) {
+    var title = str_(p.title).slice(0, 120);
+    if (!title) throw ApiError_('ต้องระบุหัวข้อรูปภาพ');
+    var caption = str_(p.caption).slice(0, 240);
+    var tag = str_(p.tag).slice(0, 40);
+    var sortOrder = Number(p.sort_order);
+    if (isNaN(sortOrder)) sortOrder = 0;
+    var isActive = p.is_active === undefined ? true : !!p.is_active;
+    var img = resolveImageInput_(p.image_url, 'showcase');
+    if (!img) throw ApiError_('กรุณาอัปโหลดรูปหรือใส่ลิงก์รูปภาพ');
+    var rows = Db.all('Storefront_Media');
+    if (p.media_id) {
+      var m = rows.filter(function (x) { return x.media_id === p.media_id; })[0];
+      if (!m) throw ApiError_('ไม่พบรูปโชว์นี้', 'NOT_FOUND');
+      m.title = title; m.caption = caption; m.tag = tag; m.image_url = img;
+      m.sort_order = sortOrder; m.is_active = isActive;
+      Db.writeRow('Storefront_Media', m._row, m);
+      return stripRow_(m);
+    }
+    var row = {
+      media_id: newUid_('M'), title: title, caption: caption, tag: tag,
+      image_url: img, sort_order: sortOrder, is_active: isActive, created_at: nowIso_()
+    };
+    Db.append('Storefront_Media', [row]);
+    return row;
+  },
+  mediaDelete: function (p) {
+    var m = Db.all('Storefront_Media').filter(function (x) { return x.media_id === p.media_id; })[0];
+    if (!m) throw ApiError_('ไม่พบรูปโชว์นี้', 'NOT_FOUND');
+    Db.deleteRow('Storefront_Media', m._row);
+    return { deleted: p.media_id };
+  },
+  storefrontSettingsSave: function (p) {
+    var allowed = Object.keys(DEFAULT_STOREFRONT_SETTINGS);
+    var existing = Db.all('Storefront_Settings'), byKey = indexBy_(existing, 'key');
+    var toAppend = [];
+    allowed.forEach(function (k) {
+      if (p[k] === undefined) return;
+      var val = str_(p[k]).slice(0, 300);
+      if (byKey[k]) {
+        byKey[k].value = val;
+        Db.writeRow('Storefront_Settings', byKey[k]._row, byKey[k]);
+      } else {
+        toAppend.push({ key: k, value: val });
+      }
+    });
+    if (toAppend.length) Db.append('Storefront_Settings', toAppend);
+    return readStorefrontSettings_();
   },
 
   /* ---------- admin: users ---------- */
@@ -820,4 +944,40 @@ function indexBy_(arr, key) { var m = {}; arr.forEach(function (x) { m[x[key]] =
 function sumBy_(arr, key) { return arr.reduce(function (a, x) { return a + x[key]; }, 0); }
 function logRow_(uid, action, actor, note, ts) {
   return { log_id: newUid_('L'), stock_uid: uid, action: action, actor_id: actor, timestamp: ts || nowIso_(), note: note };
+}
+function mediaCmp_(a, b) {
+  var sa = Number(a.sort_order) || 0, sb = Number(b.sort_order) || 0;
+  if (sa !== sb) return sa - sb;
+  return a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0;
+}
+function readStorefrontSettings_() {
+  var out = {};
+  Object.keys(DEFAULT_STOREFRONT_SETTINGS).forEach(function (k) { out[k] = DEFAULT_STOREFRONT_SETTINGS[k]; });
+  if (!Db.hasSheet('Storefront_Settings')) return out;
+  Db.all('Storefront_Settings').forEach(function (r) {
+    if (r.key && Object.prototype.hasOwnProperty.call(out, r.key)) out[r.key] = str_(r.value);
+  });
+  return out;
+}
+/** Saves base64 data URLs to Google Drive (public view link) so Sheet cells stay tiny; falls back to compact Data URL if small. */
+function resolveImageInput_(raw, prefix) {
+  var s = str_(raw);
+  if (!s) return '';
+  if (/^https?:\/\//i.test(s)) return s.slice(0, 1000);
+  var m = s.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/);
+  if (!m) throw ApiError_('รูปแบบรูปภาพไม่ถูกต้อง (ต้องเป็นลิงก์ http(s) หรือไฟล์รูป)');
+  var mime = m[1], b64 = m[2];
+  try {
+    var folderName = 'CabalStock_Images';
+    var it = DriveApp.getFoldersByName(folderName);
+    var folder = it.hasNext() ? it.next() : DriveApp.createFolder(folderName);
+    var ext = mime.indexOf('webp') >= 0 ? 'webp' : mime.indexOf('png') >= 0 ? 'png' : 'jpg';
+    var blob = Utilities.newBlob(Utilities.base64Decode(b64), mime, (prefix || 'img') + '-' + Date.now() + '.' + ext);
+    var file = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    return 'https://lh3.googleusercontent.com/d/' + file.getId();
+  } catch (err) {
+    if (s.length <= 45000) return s;
+    throw ApiError_('ไม่สามารถอัปโหลดรูปขึ้น Drive ได้: กรุณาอนุญาตสิทธิ์ Drive ใน Apps Script หรือใช้รูปขนาดเล็กลง / วางลิงก์ URL');
+  }
 }
