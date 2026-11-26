@@ -4,11 +4,18 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: { 950: '#07090f', 900: '#0b0f19', 800: '#111827', 700: '#1a2233', 600: '#263045' },
-        gold: { 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706' },
-        arcane: { 400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed' }
+        // CABAL Revolution inspired dark obsidian, warm charcoal, crimson blood & molten ember palette
+        ink: { 950: '#040404', 900: '#070707', 800: '#11100f', 700: '#1b1816', 600: '#2d2825' },
+        gold: { 400: '#f7b955', 500: '#e89b35', 600: '#c77a1b' },
+        arcane: { 400: '#ff7138', 500: '#e64b22', 600: '#c23614' },
+        blood: { 500: '#8b261d', 700: '#641d16', 900: '#350e0a' },
+        bone: '#eeeae3',
+        ash: '#8d8984'
       },
-      fontFamily: { sans: ['Inter', 'Noto Sans Thai', 'system-ui', 'sans-serif'] },
+      fontFamily: {
+        sans: ['Noto Sans Thai', 'Inter', 'system-ui', 'sans-serif'],
+        display: ['Cinzel', 'Noto Sans Thai', 'serif']
+      },
       keyframes: {
         fadeUp: { from: { opacity: 0, transform: 'translateY(10px)' }, to: { opacity: 1, transform: 'none' } },
         fadeIn: { from: { opacity: 0 }, to: { opacity: 1 } },
@@ -17,7 +24,7 @@ export default {
         shimmer: { '0%': { backgroundPosition: '-200% 0' }, '100%': { backgroundPosition: '200% 0' } },
         float: { '0%,100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-6px)' } },
         orb: { '0%,100%': { transform: 'translate(0,0) scale(1)' }, '50%': { transform: 'translate(30px,-20px) scale(1.12)' } },
-        glow: { '0%,100%': { boxShadow: '0 0 0 0 rgba(251,191,36,.45)' }, '50%': { boxShadow: '0 0 0 8px rgba(251,191,36,0)' } },
+        glow: { '0%,100%': { boxShadow: '0 0 0 0 rgba(255,113,56,.45)' }, '50%': { boxShadow: '0 0 0 8px rgba(255,113,56,0)' } },
         indeterminate: { '0%': { transform: 'translateX(-100%)' }, '100%': { transform: 'translateX(400%)' } },
         shake: { '0%,100%': { transform: 'none' }, '20%,60%': { transform: 'translateX(-6px)' }, '40%,80%': { transform: 'translateX(6px)' } }
       },

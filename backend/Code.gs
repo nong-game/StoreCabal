@@ -21,7 +21,7 @@
 var CONFIG = {
   TOKEN_TTL_SEC: 12 * 60 * 60,
   LOCK_WAIT_MS: 20000,
-  SERVER_NAME: 'Server 1', // single-server shop: every item/stock row uses this value
+  SERVER_NAME: 'CABAL Revolution', // game title used across every item/stock row
   MAX_QTY_PER_ADD: 200,
   LOGIN_MAX_FAILS: 5,
   LOGIN_WINDOW_SEC: 600
@@ -48,8 +48,8 @@ var BOOL_COLS = { Master_Items: ['has_custom_option', 'is_active'], Storefront_M
 var NUM_COLS = { Stock_Items: ['price_cost'], Storefront_Media: ['sort_order'] };
 
 var DEFAULT_STOREFRONT_SETTINGS = {
-  shop_title: 'Cabal Stock Shop',
-  shop_subtitle: 'เช็กสต็อกไอเทมพร้อมส่งแบบเรียลไทม์ จากผู้ฝากขายในเซิร์ฟเวอร์',
+  shop_title: 'CABAL Revolution Shop',
+  shop_subtitle: 'เช็กสต็อกไอเทม CABAL Revolution พร้อมส่งแบบเรียลไทม์ จากผู้ฝากขายในเกม',
   notice_text: 'สนใจชิ้นไหน กดดูรายละเอียดแล้วคัดลอกข้อความส่งให้แอดมินได้เลย',
   contact_facebook: '',
   contact_line: '',
@@ -122,6 +122,13 @@ function setupDatabase() {
     console.log('=== ADMIN CREATED ===  username: admin   password: ' + pw + '   (change it after first login)');
   }
   seedMasterItemsIfEmpty_();
+  // Migrate legacy "Server 1" labels to CONFIG.SERVER_NAME (CABAL Revolution)
+  Db.all('Master_Items').forEach(function (it) {
+    if (it.server !== CONFIG.SERVER_NAME) { it.server = CONFIG.SERVER_NAME; Db.writeRow('Master_Items', it._row, it); }
+  });
+  Db.all('Stock_Items').forEach(function (s) {
+    if (s.server !== CONFIG.SERVER_NAME) { s.server = CONFIG.SERVER_NAME; Db.writeRow('Stock_Items', s._row, s); }
+  });
   console.log('setupDatabase OK');
 }
 
@@ -534,7 +541,8 @@ var Service = {
     var users = indexBy_(Db.all('Users'), 'user_id');
     var summary = {}; // key item|server
     items.forEach(function (i) {
-      summary[i.item_id] = { item_id: i.item_id, item_name: i.item_name, server: i.server, category: i.category,
+      var srv = i.server === 'Server 1' || !i.server ? CONFIG.SERVER_NAME : i.server;
+      summary[i.item_id] = { item_id: i.item_id, item_name: i.item_name, server: srv, category: i.category,
         has_custom_option: i.has_custom_option, is_active: i.is_active, STOCKED: 0, AVAILABLE: 0, RESERVED: 0, SOLD: 0, WITHDRAWN: 0, suppliers: {} };
     });
     stock.forEach(function (s) {
@@ -765,7 +773,7 @@ var Service = {
         item_id: it.item_id,
         item_name: it.item_name,
         category: it.category || '',
-        server: it.server,
+        server: CONFIG.SERVER_NAME,
         has_custom_option: !!it.has_custom_option,
         image_url: it.image_url || '',
         description: it.description || '',
@@ -810,7 +818,7 @@ var Service = {
       return stripRow_(it);
     }
     var dup = items.some(function (i) { return i.item_name === name && i.server === server; });
-    if (dup) throw ApiError_('มีไอเทมนี้ใน Server นี้แล้ว', 'CONFLICT');
+    if (dup) throw ApiError_('มีไอเทมนี้ในเกมนี้แล้ว', 'CONFLICT');
     var row = { item_id: newUid_('I'), item_name: data.item_name, category: data.category, server: data.server,
       has_custom_option: data.has_custom_option, is_active: true, image_url: img || '', description: desc || '' };
     Db.append('Master_Items', [row]);

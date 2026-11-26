@@ -4,33 +4,33 @@ import { Coins, Gem, Bike, Swords, Package } from 'lucide-react';
 const CATEGORY_THEME = {
   Currency: {
     bg: 'from-amber-950/90 via-ink-800 to-gold-600/20',
-    ring: 'border-gold-500/30 bg-gold-500/15 text-gold-400',
+    ring: 'border-gold-500/35 bg-gold-500/15 text-gold-400',
     glow: 'bg-gold-500/20',
     Icon: Coins
   },
   Material: {
-    bg: 'from-sky-950/90 via-ink-800 to-cyan-600/20',
-    ring: 'border-sky-500/30 bg-sky-500/15 text-sky-300',
-    glow: 'bg-sky-500/20',
+    bg: 'from-stone-900 via-ink-800 to-amber-700/20',
+    ring: 'border-amber-500/30 bg-amber-500/15 text-amber-300',
+    glow: 'bg-amber-500/20',
     Icon: Gem
   },
   Vehicle: {
-    bg: 'from-purple-950/90 via-ink-800 to-arcane-500/25',
-    ring: 'border-arcane-500/30 bg-arcane-500/15 text-arcane-400',
+    bg: 'from-blood-900/90 via-ink-800 to-arcane-500/25',
+    ring: 'border-arcane-400/40 bg-arcane-500/15 text-arcane-400',
     glow: 'bg-arcane-500/25',
     Icon: Bike
   },
   Equipment: {
-    bg: 'from-rose-950/80 via-ink-800 to-amber-500/20',
-    ring: 'border-rose-500/30 bg-rose-500/15 text-rose-300',
-    glow: 'bg-rose-500/20',
+    bg: 'from-red-950/90 via-ink-800 to-arcane-500/20',
+    ring: 'border-arcane-500/35 bg-arcane-600/20 text-arcane-400',
+    glow: 'bg-blood-500/30',
     Icon: Swords
   }
 };
 
 const DEFAULT_THEME = {
-  bg: 'from-ink-900 via-ink-800 to-arcane-600/20',
-  ring: 'border-ink-600 bg-ink-700/80 text-slate-300',
+  bg: 'from-ink-900 via-ink-800 to-blood-900/40',
+  ring: 'border-bone/15 bg-ink-700/80 text-bone',
   glow: 'bg-arcane-500/15',
   Icon: Package
 };

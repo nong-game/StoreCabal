@@ -11,8 +11,8 @@ function makeShowcaseSvg(title, subtitle, accentA, accentB, glyph) {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540">
     <defs>
       <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="#0b0f19"/>
-        <stop offset="55%" stop-color="#151d30"/>
+        <stop offset="0%" stop-color="#070707"/>
+        <stop offset="55%" stop-color="#11100f"/>
         <stop offset="100%" stop-color="${accentA}"/>
       </linearGradient>
       <radialGradient id="glow" cx="78%" cy="30%" r="48%">
@@ -22,25 +22,27 @@ function makeShowcaseSvg(title, subtitle, accentA, accentB, glyph) {
     </defs>
     <rect width="960" height="540" fill="url(#bg)"/>
     <rect width="960" height="540" fill="url(#glow)"/>
-    <g opacity="0.14" stroke="#94a3b8" stroke-width="1">
+    <g opacity="0.12" stroke="#eeeae3" stroke-width="1">
       <path d="M0 90 H960 M0 180 H960 M0 270 H960 M0 360 H960 M0 450 H960"/>
       <path d="M160 0 V540 M320 0 V540 M480 0 V540 M640 0 V540 M800 0 V540"/>
     </g>
     <circle cx="755" cy="245" r="135" fill="none" stroke="${accentB}" stroke-opacity="0.35" stroke-width="2" stroke-dasharray="10 8"/>
-    <circle cx="755" cy="245" r="95" fill="${accentB}" fill-opacity="0.12" stroke="${accentB}" stroke-opacity="0.6" stroke-width="2"/>
-    <text x="755" y="268" text-anchor="middle" font-family="sans-serif" font-size="76" font-weight="700" fill="${accentB}">${esc(glyph)}</text>
+    <circle cx="755" cy="245" r="95" fill="${accentB}" fill-opacity="0.14" stroke="${accentB}" stroke-opacity="0.65" stroke-width="2"/>
+    <text x="755" y="268" text-anchor="middle" font-family="Cinzel, serif" font-size="68" font-weight="800" fill="${accentB}">${esc(glyph)}</text>
     <rect x="64" y="135" width="96" height="6" rx="3" fill="${accentB}"/>
-    <text x="64" y="210" font-family="Noto Sans Thai, Inter, sans-serif" font-size="44" font-weight="800" fill="#f8fafc">${esc(title)}</text>
-    <text x="64" y="268" font-family="Noto Sans Thai, Inter, sans-serif" font-size="24" fill="#cbd5e1">${esc(subtitle)}</text>
-    <rect x="64" y="330" width="240" height="44" rx="22" fill="${accentB}" fill-opacity="0.18" stroke="${accentB}" stroke-opacity="0.5"/>
-    <text x="184" y="359" text-anchor="middle" font-family="Noto Sans Thai, Inter, sans-serif" font-size="18" font-weight="700" fill="#fde68a">เช็กสต็อกสด · พร้อมส่ง</text>
+    <text x="64" y="210" font-family="Noto Sans Thai, Inter, sans-serif" font-size="44" font-weight="800" fill="#eeeae3">${esc(title)}</text>
+    <text x="64" y="268" font-family="Noto Sans Thai, Inter, sans-serif" font-size="24" fill="#b4aaa0">${esc(subtitle)}</text>
+    <rect x="64" y="330" width="260" height="44" rx="22" fill="${accentB}" fill-opacity="0.18" stroke="${accentB}" stroke-opacity="0.55"/>
+    <text x="194" y="359" text-anchor="middle" font-family="Noto Sans Thai, Inter, sans-serif" font-size="18" font-weight="700" fill="#eeeae3">CABAL Revolution · พร้อมส่ง</text>
   </svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
+const GAME_NAME = 'CABAL Revolution';
+
 const DEFAULT_SETTINGS = {
-  shop_title: 'Cabal Stock Shop',
-  shop_subtitle: 'เช็กสต็อกไอเทมพร้อมส่งแบบเรียลไทม์ จากผู้ฝากขายในเซิร์ฟเวอร์',
+  shop_title: 'CABAL Revolution Shop',
+  shop_subtitle: 'เช็กสต็อกไอเทม CABAL Revolution พร้อมส่งแบบเรียลไทม์ จากผู้ฝากขายในเกม',
   notice_text: 'สนใจชิ้นไหน กดดูรายละเอียดแล้วคัดลอกข้อความส่งให้แอดมินได้เลย',
   contact_facebook: '',
   contact_line: '',
@@ -55,7 +57,7 @@ function defaultMedia() {
       title: 'รถ RW3 EX 2 ออปชั่นแน่น พร้อมส่ง',
       caption: 'เช็กจำนวน +11 / +12 ที่มีในคิวตอนนี้ได้ทันที สินค้าอัปเดตตรงจากคลัง',
       tag: 'สินค้าแนะนำ',
-      image_url: makeShowcaseSvg('รถ RW3 EX 2 พร้อมส่ง', 'เลือกระดับตีบวกและออปชั่นได้ทันทีจากสต็อกจริง', '#3b1d5e', '#fbbf24', 'RW3'),
+      image_url: makeShowcaseSvg('รถ RW3 EX 2 พร้อมส่ง', 'เลือกระดับตีบวกและออปชั่นได้ทันทีจากสต็อกจริง', '#641d16', '#ff7138', 'RW3'),
       sort_order: 1,
       is_active: true,
       created_at: ts
@@ -65,7 +67,7 @@ function defaultMedia() {
       title: 'Alz · Core · ใบกันแตก ส่งไว',
       caption: 'รวมสต็อกผู้ฝากขายหลายร้านในที่เดียว พร้อมโอนในเกมทันทีหลังยืนยันออเดอร์',
       tag: 'ยอดนิยม',
-      image_url: makeShowcaseSvg('Alz &amp; ใบกันแตกพร้อมส่ง', 'เรทดี ส่งไว เช็กยอดคงเหลือได้ตลอด 24 ชม.', '#0f3460', '#38bdf8', 'ALZ'),
+      image_url: makeShowcaseSvg('Alz &amp; ใบกันแตกพร้อมส่ง', 'เรทดี ส่งไว เช็กยอดคงเหลือได้ตลอด 24 ชม.', '#3b150e', '#f7b955', 'ALZ'),
       sort_order: 2,
       is_active: true,
       created_at: ts
@@ -75,7 +77,7 @@ function defaultMedia() {
       title: 'พื้นที่โชว์สินค้า / รูปประกอบร้าน',
       caption: 'แอดมินสามารถอัปโหลดภาพแคปหน้าจอไอเทม หรือแบนเนอร์โปรโมชั่นมาแทนที่ได้ในเมนู "หน้าร้าน"',
       tag: 'โปรโมชั่น',
-      image_url: makeShowcaseSvg('อัปโหลดรูปโชว์สินค้าได้', 'โชว์สเตตัสไอเทมหรือแบนเนอร์ร้านให้ลูกค้าดูง่าย', '#1f2937', '#a78bfa', '★'),
+      image_url: makeShowcaseSvg('CABAL Revolution', 'อัปโหลดรูปสเตตัสไอเทมหรือแบนเนอร์ร้านให้ลูกค้าดูง่าย', '#4a1410', '#e64b22', 'REVO'),
       sort_order: 3,
       is_active: true,
       created_at: ts
@@ -98,7 +100,7 @@ function seed() {
     ['รถ RW3 EX 2 (มีออปชั่น)', 'Vehicle', true, 'มอเตอร์ไซค์ยอดนิยม เลือกระดับ EX และ + ได้'],
     ['Weapon / Armor (มีออปชั่น)', 'Equipment', true, 'อาวุธและชุดเกราะคัดออปชั่น']
   ].forEach(([item_name, category, has_custom_option, description], j) =>
-    items.push({ item_id: `I-${j + 1}`, item_name, category, server: 'Server 1', has_custom_option, is_active: true, image_url: '', description }));
+    items.push({ item_id: `I-${j + 1}`, item_name, category, server: GAME_NAME, has_custom_option, is_active: true, image_url: '', description }));
   const stock = [];
   let n = 0;
   const add = (supplier_id, item_id, server, count, note = '', stocked = false) => {
@@ -108,12 +110,12 @@ function seed() {
       stock.push({ stock_uid: uid('STK'), item_id, server, supplier_id, custom_note: note, price_cost: 0, status: stocked ? 'STOCKED' : 'AVAILABLE', created_at: ts, updated_at: ts, order_ref: '', lot_id: lot, queued_at: stocked ? '' : ts });
     }
   };
-  add('U-S1', 'I-3', 'Server 1', 3); add('U-S2', 'I-3', 'Server 1', 4); add('U-S1', 'I-3', 'Server 1', 2);
-  add('U-S2', 'I-2', 'Server 1', 5); add('U-S1', 'I-1', 'Server 1', 2);
-  add('U-S1', 'I-4', 'Server 1', 1, 'EX 2 +12'); add('U-S2', 'I-4', 'Server 1', 1, 'ex 2 +12');
-  add('U-S2', 'I-4', 'Server 1', 1, 'EX 2 +11'); add('U-S1', 'I-4', 'Server 1', 1, 'EX 2 +12');
-  add('U-S2', 'I-3', 'Server 1', 3);
-  add('U-S1', 'I-1', 'Server 1', 11, '', true); // 11 pieces sitting in the warehouse, not queued
+  add('U-S1', 'I-3', GAME_NAME, 3); add('U-S2', 'I-3', GAME_NAME, 4); add('U-S1', 'I-3', GAME_NAME, 2);
+  add('U-S2', 'I-2', GAME_NAME, 5); add('U-S1', 'I-1', GAME_NAME, 2);
+  add('U-S1', 'I-4', GAME_NAME, 1, 'EX 2 +12'); add('U-S2', 'I-4', GAME_NAME, 1, 'ex 2 +12');
+  add('U-S2', 'I-4', GAME_NAME, 1, 'EX 2 +11'); add('U-S1', 'I-4', GAME_NAME, 1, 'EX 2 +12');
+  add('U-S2', 'I-3', GAME_NAME, 3);
+  add('U-S1', 'I-1', GAME_NAME, 11, '', true); // 11 pieces sitting in the warehouse, not queued
   return { users, items, stock, logs: [], media: defaultMedia(), settings: { ...DEFAULT_SETTINGS } };
 }
 
@@ -125,9 +127,15 @@ function load() {
       let dirty = false;
       if (!Array.isArray(db.media)) { db.media = defaultMedia(); dirty = true; }
       if (!db.settings) { db.settings = { ...DEFAULT_SETTINGS }; dirty = true; }
+      if (db.settings.shop_title === 'Cabal Stock Shop') { db.settings.shop_title = DEFAULT_SETTINGS.shop_title; dirty = true; }
+      if (db.settings.shop_subtitle === 'เช็กสต็อกไอเทมพร้อมส่งแบบเรียลไทม์ จากผู้ฝากขายในเซิร์ฟเวอร์') { db.settings.shop_subtitle = DEFAULT_SETTINGS.shop_subtitle; dirty = true; }
       (db.items || []).forEach((it) => {
         if (it.image_url === undefined) { it.image_url = ''; dirty = true; }
         if (it.description === undefined) { it.description = ''; dirty = true; }
+        if (it.server === 'Server 1') { it.server = GAME_NAME; dirty = true; }
+      });
+      (db.stock || []).forEach((s) => {
+        if (s.server === 'Server 1') { s.server = GAME_NAME; dirty = true; }
       });
       if (dirty) save(db);
       return db;
@@ -417,11 +425,11 @@ const H = {
       settings: { ...DEFAULT_SETTINGS, ...(db.settings || {}) },
       media,
       items: catalog,
-      stats: { total_available: avail.length, item_types_in_stock: catalog.filter((c) => c.available_count > 0).length, total_items: catalog.length, server: 'Server 1' }
+      stats: { total_available: avail.length, item_types_in_stock: catalog.filter((c) => c.available_count > 0).length, total_items: catalog.length, server: GAME_NAME }
     };
   },
   item_upsert(db, p) {
-    const item_name = String(p.item_name || '').trim(); const server = 'Server 1';
+    const item_name = String(p.item_name || '').trim(); const server = GAME_NAME;
     if (!item_name) throw new E('ต้องระบุชื่อไอเทม');
     const data = { item_name, category: String(p.category || '').trim(), server, has_custom_option: !!p.has_custom_option };
     if (p.image_url !== undefined) data.image_url = String(p.image_url || '').trim();
@@ -432,7 +440,7 @@ const H = {
       if (it.has_custom_option && !data.has_custom_option && live) throw new E('ยังมีสต็อกที่ระบุรุ่นอยู่ ปิดการแยกรุ่นไม่ได้ (ต้องขาย/ถอนของเหล่านั้นก่อน)');
       Object.assign(it, data); return it;
     }
-    if (db.items.some((i) => i.item_name === item_name && i.server === server)) throw new E('มีไอเทมนี้ใน Server นี้แล้ว', 'CONFLICT');
+    if (db.items.some((i) => i.item_name === item_name && i.server === server)) throw new E('มีไอเทมนี้ในเกมนี้แล้ว', 'CONFLICT');
     const row = { item_id: uid('I'), image_url: '', description: '', ...data, is_active: true }; db.items.push(row); return row;
   },
   item_toggle(db, p) {

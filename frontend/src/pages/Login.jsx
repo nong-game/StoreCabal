@@ -33,8 +33,8 @@ export default function Login({ onBack }) {
         )}
         <div className="text-center">
           <div className="inline-flex p-3 rounded-2xl bg-gradient-to-br from-arcane-600 to-gold-500 mb-3 animate-float shadow-lg shadow-arcane-600/30"><Swords className="text-white" size={28} /></div>
-          <h1 className="text-xl font-bold text-slate-100">Cabal Stock Portal</h1>
-          <p className="text-xs text-slate-500">ระบบหลังบ้านผู้ฝากขาย & แอดมินร้าน</p>
+          <h1 className="text-xl font-display font-bold tracking-wide text-bone">CABAL Revolution</h1>
+          <p className="text-xs text-ash">ระบบหลังบ้านผู้ฝากขาย & แอดมินร้าน</p>
         </div>
 
         {err && <ErrorBox key={errKey} error={err} />}

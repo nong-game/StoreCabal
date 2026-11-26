@@ -16,8 +16,8 @@ export default function Splash() {
       </div>
 
       <div className="text-center space-y-1 animate-fade-up" style={{ animationDelay: '120ms' }}>
-        <div className="text-lg font-bold text-slate-100">Cabal Stock Portal</div>
-        <div className="text-sm text-slate-400">กำลังตรวจสอบการเข้าสู่ระบบ…</div>
+        <div className="text-lg font-display font-bold tracking-wide text-bone">CABAL Revolution</div>
+        <div className="text-sm text-ash">กำลังตรวจสอบการเข้าสู่ระบบ…</div>
       </div>
 
       <div className="w-48 h-1 rounded-full bg-ink-700 overflow-hidden animate-fade-in" style={{ animationDelay: '200ms' }}>

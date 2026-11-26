@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Swords, LogIn, RefreshCw, Search, Sparkles, PackageCheck, Layers, Server,
+  Swords, LogIn, RefreshCw, Search, Sparkles, PackageCheck, Layers, Gamepad2,
   ChevronLeft, ChevronRight, Maximize2, X, Copy, Check, MessageCircle, ArrowLeft, ShoppingBag
 } from 'lucide-react';
 import { api, IS_MOCK } from '../services/api.js';
@@ -43,7 +43,7 @@ export default function Storefront({ onLoginClick, onBackToPortal, isLoggedIn = 
   const media = data?.media || [];
   const items = data?.items || [];
   const settings = data?.settings || {};
-  const stats = data?.stats || { total_available: 0, item_types_in_stock: 0, total_items: 0, server: 'Server 1' };
+  const stats = data?.stats || { total_available: 0, item_types_in_stock: 0, total_items: 0, server: 'CABAL Revolution' };
 
   useEffect(() => {
     if (slide >= media.length) setSlide(0);
@@ -87,12 +87,12 @@ export default function Storefront({ onLoginClick, onBackToPortal, isLoggedIn = 
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-100 truncate">{settings.shop_title || 'Cabal Stock Shop'}</span>
-                <span className="hidden sm:inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />{stats.server}
+                <span className="font-display font-bold tracking-wide text-bone truncate">{settings.shop_title || 'CABAL Revolution Shop'}</span>
+                <span className="hidden sm:inline-flex items-center gap-1 rounded-full border border-arcane-400/35 bg-arcane-600/15 px-2.5 py-0.5 text-[10px] font-semibold text-arcane-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-arcane-400 animate-pulse" />{stats.server}
                 </span>
               </div>
-              <div className="text-[11px] text-slate-500 truncate">หน้าร้านเช็กสต็อกสำหรับลูกค้า</div>
+              <div className="text-[11px] text-ash truncate">หน้าร้านเช็กสต็อกสำหรับลูกค้า</div>
             </div>
           </div>
 
@@ -131,14 +131,14 @@ export default function Storefront({ onLoginClick, onBackToPortal, isLoggedIn = 
               <div className="card p-5 sm:p-6 flex flex-col justify-between gap-5 relative overflow-hidden">
                 <div aria-hidden className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-arcane-600/15 blur-3xl" />
                 <div className="space-y-3 relative">
-                  <div className="inline-flex items-center gap-1.5 rounded-full border border-gold-500/30 bg-gold-500/10 px-3 py-1 text-[11px] font-semibold text-gold-400">
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-arcane-400/35 bg-arcane-600/15 px-3 py-1 text-[11px] font-semibold text-arcane-400">
                     <Sparkles size={12} />สต็อกอัปเดตสดจากคิวขายร้าน
                   </div>
-                  <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 leading-tight">
-                    {settings.shop_title || 'Cabal Stock Shop'}
+                  <h1 className="text-2xl sm:text-3xl font-display font-extrabold tracking-wide text-bone leading-tight">
+                    {settings.shop_title || 'CABAL Revolution Shop'}
                   </h1>
-                  <p className="text-sm text-slate-400 leading-relaxed">
-                    {settings.shop_subtitle || 'เช็กสต็อกไอเทมพร้อมส่งแบบเรียลไทม์'}
+                  <p className="text-sm text-ash leading-relaxed">
+                    {settings.shop_subtitle || 'เช็กสต็อกไอเทม CABAL Revolution พร้อมส่งแบบเรียลไทม์'}
                   </p>
                   {settings.notice_text && (
                     <div className="rounded-xl border border-arcane-500/30 bg-arcane-600/10 px-3.5 py-2.5 text-xs text-slate-200 leading-relaxed">
@@ -157,9 +157,9 @@ export default function Storefront({ onLoginClick, onBackToPortal, isLoggedIn = 
                       <div className="flex items-center gap-1 text-[11px] text-slate-500"><Layers size={12} className="text-gold-400" />มีของ</div>
                       <div className="text-xl font-bold text-gold-400 tabular-nums mt-0.5">{fmtNum(stats.item_types_in_stock)} <span className="text-xs font-normal text-slate-500">แบบ</span></div>
                     </div>
-                    <div className="rounded-xl border border-ink-600 bg-ink-900/60 p-3">
-                      <div className="flex items-center gap-1 text-[11px] text-slate-500"><Server size={12} className="text-arcane-400" />เซิร์ฟ</div>
-                      <div className="text-sm font-bold text-slate-100 truncate mt-1.5">{stats.server}</div>
+                    <div className="rounded-xl border border-bone/15 bg-ink-900/70 p-3">
+                      <div className="flex items-center gap-1 text-[11px] text-ash"><Gamepad2 size={12} className="text-arcane-400" />เกม</div>
+                      <div className="text-xs sm:text-sm font-display font-bold text-bone truncate mt-1.5">{stats.server}</div>
                     </div>
                   </div>
 
