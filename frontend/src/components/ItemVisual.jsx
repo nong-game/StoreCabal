@@ -41,9 +41,26 @@ const DEFAULT_THEME = {
   Icon: Package
 };
 
+function matchNamedIcon(name) {
+  const n = String(name || '');
+  if (/rw3/i.test(n)) {
+    return { src: './game/item-rw3.png', framed: true, glow: 'bg-sky-500/30', ring: 'border-sky-400/40 bg-[#101826]', bgArt: './game/kv1.webp' };
+  }
+  if (/\bblue\b|รถ\s*blue|ไบค์\s*blue/i.test(n)) {
+    return { src: './game/item-blue.png', framed: true, glow: 'bg-cyan-500/30', ring: 'border-cyan-400/40 bg-[#101826]', bgArt: './game/kv2.webp' };
+  }
+  if (/\bgem\b|เจม|เพชร/i.test(n)) {
+    return { src: './game/item-gem.png', framed: false, glow: 'bg-cyan-400/35', bgArt: './game/kv3.webp' };
+  }
+  if (/\balz\b/i.test(n)) {
+    return { src: './game/coin.webp', framed: false, glow: 'bg-gold-500/30' };
+  }
+  return null;
+}
+
 /**
- * Displays an item's uploaded image when available, or a CABAL Revolution themed artwork fallback
- * so cards and tables always look vivid.
+ * Displays an item's uploaded image when available, or a matched in-game icon (RW3 / Blue / Gem / Alz)
+ * and CABAL Revolution themed artwork fallback so cards always look vivid.
  */
 export default function ItemVisual({ src, name = '', category = '', size = 'md', className = '' }) {
   const [failed, setFailed] = useState(false);
@@ -61,6 +78,38 @@ export default function ItemVisual({ src, name = '', category = '', size = 'md',
           onError={() => setFailed(true)}
           className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
         />
+      </div>
+    );
+  }
+
+  const named = matchNamedIcon(name);
+  if (named) {
+    return (
+      <div className={`relative overflow-hidden bg-gradient-to-br ${theme.bg} flex items-center justify-center ${className}`}>
+        {named.bgArt && size !== 'sm' && (
+          <>
+            <img src={named.bgArt} alt="" aria-hidden loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-25 transition duration-500 group-hover:scale-105" />
+            <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-ink-950/90 via-ink-900/50 to-ink-950/50" />
+          </>
+        )}
+        <div aria-hidden className={`absolute h-24 w-24 rounded-full blur-2xl ${named.glow}`} />
+        {named.framed ? (
+          <div className={`relative rounded-xl border shadow-lg transition duration-500 group-hover:scale-105 ${named.ring} ${size === 'sm' ? 'p-1 rounded-lg' : size === 'lg' ? 'px-5 py-3.5' : 'px-3.5 py-2.5'}`}>
+            <img
+              src={named.src}
+              alt={name}
+              loading="lazy"
+              className={`object-contain ${size === 'sm' ? 'h-6 w-8' : size === 'lg' ? 'h-16 w-28' : 'h-12 w-20'}`}
+            />
+          </div>
+        ) : (
+          <img
+            src={named.src}
+            alt={name}
+            loading="lazy"
+            className={`relative object-contain drop-shadow-[0_4px_16px_rgba(34,211,238,0.45)] transition duration-500 group-hover:scale-110 ${size === 'sm' ? 'h-7 w-7' : size === 'lg' ? 'h-24 w-24' : 'h-16 w-16'}`}
+          />
+        )}
       </div>
     );
   }
