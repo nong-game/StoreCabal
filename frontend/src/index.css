@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body, #root { min-height: 100%; }
+  html { scroll-behavior: smooth; }
+  body { @apply bg-ink-900 text-slate-200 antialiased; background-image: radial-gradient(1200px 500px at 80% -10%, rgba(139,92,246,.12), transparent), radial-gradient(900px 400px at -10% 110%, rgba(245,158,11,.08), transparent); background-attachment: fixed; }
+  input, select, textarea { @apply bg-ink-800 border border-ink-600 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 w-full transition focus:outline-none focus:ring-2 focus:ring-arcane-500/60 focus:border-arcane-500; }
+  select option { @apply bg-ink-800; }
+  label { @apply block text-xs font-medium text-slate-400 mb-1; }
+  button { @apply select-none; }
+  ::-webkit-scrollbar { height: 8px; width: 8px; }
+  ::-webkit-scrollbar-thumb { @apply bg-ink-600 rounded-full; }
+}
+@layer components {
+  .card { @apply bg-ink-800/80 backdrop-blur border border-ink-600 rounded-xl transition-colors duration-300; }
+  .card-hover { @apply hover:border-arcane-500/40 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-arcane-600/10 transition duration-300; }
+  .th { @apply text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold px-3 py-2 whitespace-nowrap; }
+  .td { @apply px-3 py-2.5 text-sm border-t border-ink-700; }
+  .tr-hover { @apply transition-colors hover:bg-ink-700/40; }
+  .skeleton { @apply rounded-lg bg-[length:200%_100%] animate-shimmer; background-image: linear-gradient(90deg, #1a2233 25%, #263045 50%, #1a2233 75%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}

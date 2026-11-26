@@ -1,0 +1,16 @@
+# dependencies / build
+node_modules/
+dist/
+
+# secrets: Apps Script URL etc. (copy .env.example)
+.env
+.env.*
+!.env.example
+
+# local tooling
+.claude/
+.vscode/
+.idea/
+*.log
+.DS_Store
+Thumbs.db
