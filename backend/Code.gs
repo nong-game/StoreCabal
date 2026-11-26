@@ -578,12 +578,13 @@ var Service = {
   },
 
   fifoConfirm: function (p, actor) {
-    var orderRef = str_(p.order_ref).slice(0, 80);
-    if (!orderRef) throw ApiError_('ต้องระบุเลขที่ออเดอร์ (order_ref)');
+    var orderRef = str_(p.order_ref).slice(0, 80);   // optional: blank → named after what was sold
     var target = p.mark === 'SOLD' ? STATUS.SOLD : STATUS.RESERVED;
     var stock = Db.all('Stock_Items');                      // re-read INSIDE lock → fresh state
     var plan = this.buildPlan_(p, stock, false);
     if (plan.shortfall > 0) throw ApiError_('สต็อกไม่พอ: มี ' + plan.available + ' ต้องการ ' + plan.qty, 'INSUFFICIENT');
+    if (!orderRef) orderRef = (plan.item.item_name + (plan.variant ? ' ' + plan.variant : '') + ' ' +
+      Utilities.formatDate(new Date(), 'Asia/Bangkok', 'dd/MM HH:mm:ss')).slice(0, 80);
     var ts = nowIso_(), logs = [];
     plan._picked_raw.forEach(function (s) {
       s.status = target; s.updated_at = ts; s.order_ref = orderRef;

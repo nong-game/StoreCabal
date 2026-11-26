@@ -206,11 +206,12 @@ const H = {
   },
   fifo_preview(db, p) { const { _raw, ...rest } = plan(db, p, true); return rest; },
   fifo_confirm(db, p, a) {
-    const ref = String(p.order_ref || '').trim().slice(0, 80);
-    if (!ref) throw new E('ต้องระบุเลขที่ออเดอร์ (order_ref)');
+    let ref = String(p.order_ref || '').trim().slice(0, 80);
     const target = p.mark === 'SOLD' ? 'SOLD' : 'RESERVED';
     const { _raw, ...pl } = plan(db, p, false);
     if (pl.shortfall > 0) throw new E(`สต็อกไม่พอ: มี ${pl.available} ต้องการ ${pl.qty}`, 'INSUFFICIENT');
+    if (!ref) { const d = new Date(); const z = (n) => String(n).padStart(2, '0');
+      ref = `${pl.item.item_name}${pl.variant ? ` ${pl.variant}` : ''} ${z(d.getDate())}/${z(d.getMonth() + 1)} ${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())}`.slice(0, 80); }
     const ts = now();
     _raw.forEach((r) => {
       const s = db.stock.find((x) => x.stock_uid === r.stock_uid);

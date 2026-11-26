@@ -18,6 +18,12 @@ export default function Fulfillment() {
   const [busy, setBusy] = useState('');           // which action is running
   const [dlg, setDlg] = useState(null);           // { type:'sell'|'edit'|'remove', lot? }
   const [keep, setKeep] = useState(0);
+  const [stamp, setStamp] = useState('');
+  useEffect(() => {
+    const z = (n) => String(n).padStart(2, '0');
+    const tick = () => { const d = new Date(); setStamp(`${z(d.getDate())}/${z(d.getMonth() + 1)} ${z(d.getHours())}:${z(d.getMinutes())}`); };
+    tick(); const t = setInterval(tick, 15000); return () => clearInterval(t);
+  }, []);
 
   const queues = data?.queues || [];
   const q = queues.find((x) => x.key === sel);
@@ -86,18 +92,23 @@ export default function Fulfillment() {
             <div className="space-y-4 min-w-0">
               {/* sell bar */}
               <Card title={<span>ขาย <span className="text-gold-400">{qLabel(q)}</span></span>} delay={1}>
-                <div className="grid sm:grid-cols-[180px_1fr_auto] gap-3 items-end">
+                <div className="grid gap-3 md:grid-cols-[260px_1fr]">
                   <div><label>จำนวนที่ลูกค้าสั่ง</label><QtyInput value={qty} onChange={setQty} max={q.pieces} /></div>
-                  <div><label>เลขที่ออเดอร์</label><input value={orderRef} maxLength={80} onChange={(e) => setOrderRef(e.target.value)} placeholder="เช่น ORD-1024" /></div>
-                  <div className="flex rounded-lg border border-ink-600 p-0.5 bg-ink-900/50 h-[38px]">
-                    {[['RESERVED', 'จองไว้'], ['SOLD', 'ขายเลย']].map(([k, t]) => (
-                      <button key={k} type="button" onClick={() => setMark(k)} className={`px-3 rounded-md text-xs font-semibold transition ${mark === k ? 'bg-arcane-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>{t}</button>
-                    ))}
+                  <div>
+                    <label>ชื่อออเดอร์ <span className="text-slate-500">(ไม่บังคับ)</span></label>
+                    <input value={orderRef} maxLength={80} onChange={(e) => setOrderRef(e.target.value)} placeholder={`อัตโนมัติ: ${qLabel(q)} ${stamp}`} />
                   </div>
                 </div>
-                <div className="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="mt-3 flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3">
                   <p className="text-xs text-slate-500">ดึงจากหัวคิวตามลำดับ · ล็อตที่ถูกดึงไฮไลต์สีทองด้านล่าง</p>
-                  <Button variant="gold" disabled={!orderRef.trim()} onClick={() => setDlg({ type: 'sell' })}><Swords size={16} />{mark === 'SOLD' ? 'ขาย' : 'จอง'} {Math.min(Number(qty) || 0, q.pieces)} ชิ้น</Button>
+                  <div className="flex items-center gap-2">
+                    <div className="flex rounded-lg border border-ink-600 p-0.5 bg-ink-900/50 h-[38px]">
+                      {[['RESERVED', 'จองไว้'], ['SOLD', 'ขายเลย']].map(([k, t]) => (
+                        <button key={k} type="button" onClick={() => setMark(k)} className={`px-3 rounded-md text-xs font-semibold transition ${mark === k ? 'bg-arcane-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>{t}</button>
+                      ))}
+                    </div>
+                    <Button variant="gold" disabled={!(Number(qty) > 0)} onClick={() => setDlg({ type: 'sell' })}><Swords size={16} />{mark === 'SOLD' ? 'ขาย' : 'จอง'} {Math.min(Number(qty) || 0, q.pieces)} ชิ้น</Button>
+                  </div>
                 </div>
               </Card>
 
@@ -161,7 +172,7 @@ export default function Fulfillment() {
       </Card>
 
       <Confirm open={dlg?.type === 'sell'} loading={busy === 'sell'} title={mark === 'SOLD' ? 'ยืนยันขาย' : 'ยืนยันจอง'} confirmLabel="ยืนยัน" onCancel={() => setDlg(null)} onConfirm={sell}
-        body={q && <>{mark === 'SOLD' ? 'ขาย' : 'จอง'} <b className="text-slate-200">{qLabel(q)} × {Math.min(Number(qty) || 0, q.pieces)}</b> ออเดอร์ <b className="text-slate-200">{orderRef}</b> จากหัวคิว ระบบจะตรวจคิวล่าสุดอีกครั้งก่อนบันทึก</>} />
+        body={q && <>{mark === 'SOLD' ? 'ขาย' : 'จอง'} <b className="text-slate-200">{qLabel(q)} × {Math.min(Number(qty) || 0, q.pieces)}</b> ชื่อออเดอร์ <b className="text-slate-200">{orderRef.trim() || `${qLabel(q)} ${stamp}`}</b> จากหัวคิว ระบบจะตรวจคิวล่าสุดอีกครั้งก่อนบันทึก</>} />
       <Confirm open={dlg?.type === 'edit'} loading={busy === 'lot'} title="แก้จำนวนในล็อต" confirmLabel={`เหลือ ${keep} ชิ้น`} onCancel={() => setDlg(null)} onConfirm={saveLot}
         body={dlg?.lot && (
           <div className="space-y-3">
