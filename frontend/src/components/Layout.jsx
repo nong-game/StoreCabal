@@ -27,7 +27,7 @@ export default function Layout({ tabs, active, onChange, onOpenStorefront, child
           )}
           <div>
             <div className="text-sm font-medium text-slate-200 truncate">{user.shop_name}</div>
-            <div className="text-xs text-slate-500 mb-2">{user.role === 'admin' ? 'ผู้ดูแลร้าน' : 'ผู้ฝากขาย'} · {user.username}</div>
+            <div className="text-xs text-slate-500 mb-2">{String(user.role || '').trim().toLowerCase() === 'admin' ? 'ผู้ดูแลร้าน' : 'ผู้ฝากขาย'} · {user.username}</div>
             <button onClick={logout} className="flex items-center gap-2 text-xs text-slate-400 hover:text-rose-300 transition"><LogOut size={14} />ออกจากระบบ</button>
           </div>
         </div>

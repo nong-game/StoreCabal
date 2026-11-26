@@ -315,7 +315,12 @@ var Db = {
         o[h] = v;
       });
       // Skip completely empty spreadsheet rows
-      if (name === 'Master_Items') {
+      if (name === 'Users') {
+        if (!str_(o.username) && !str_(o.user_id)) continue;
+        o.username = str_(o.username).toLowerCase();
+        o.role = str_(o.role).toLowerCase() === 'admin' ? 'admin' : 'supplier';
+        o.status = str_(o.status || 'active').toLowerCase();
+      } else if (name === 'Master_Items') {
         if (!str_(o.item_name) && !str_(o.item_id)) continue;
         if (!str_(o.item_id)) o.item_id = 'ROW-' + o._row;
         if (!str_(o.unit)) o.unit = defaultUnitForName_(o.item_name);

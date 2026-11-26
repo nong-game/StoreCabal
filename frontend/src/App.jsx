@@ -61,7 +61,8 @@ export default function App() {
     return <Storefront isLoggedIn onBackToPortal={() => setPreviewStore(false)} />;
   }
 
-  const tabs = user.role === 'admin' ? ADMIN_TABS : SUPPLIER_TABS;
+  const isAdmin = String(user.role || '').trim().toLowerCase() === 'admin';
+  const tabs = isAdmin ? ADMIN_TABS : SUPPLIER_TABS;
   const current = tabs.find((t) => t.key === tab) || tabs[0];
   const View = current.view;
   // key={user_id} drops page state when another user logs in

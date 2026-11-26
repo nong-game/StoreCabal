@@ -21,7 +21,7 @@ export default function Account() {
       <Card title="บัญชีของฉัน" delay={0}>
         <div className="flex items-center gap-3">
           <div className="h-12 w-12 rounded-full bg-gradient-to-br from-arcane-600 to-gold-500 flex items-center justify-center text-lg font-bold text-white">{user.shop_name.slice(0, 1).toUpperCase()}</div>
-          <div><div className="font-semibold text-slate-100">{user.shop_name}</div><div className="text-xs text-slate-500">{user.username} · {user.role === 'admin' ? 'ผู้ดูแลร้าน' : 'ผู้ฝากขาย'}</div></div>
+          <div><div className="font-semibold text-slate-100">{user.shop_name}</div><div className="text-xs text-slate-500">{user.username} · {String(user.role || '').trim().toLowerCase() === 'admin' ? 'ผู้ดูแลร้าน' : 'ผู้ฝากขาย'}</div></div>
         </div>
       </Card>
 
