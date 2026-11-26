@@ -1,43 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  LogIn, RefreshCw, Search, Sparkles, PackageCheck, Layers, Gamepad2,
-  ChevronLeft, ChevronRight, Maximize2, X, Copy, Check, MessageCircle, ArrowLeft, ShoppingBag
+  LogIn, RefreshCw, Search, Maximize2, X, Copy, Check, MessageCircle, ArrowLeft
 } from 'lucide-react';
 import { api, IS_MOCK } from '../services/api.js';
 import { Button, Empty, ErrorBox, QtyInput, Spinner, useAsync, useToast } from '../components/ui.jsx';
 import ItemVisual from '../components/ItemVisual.jsx';
 import { fmtGame, fmtNum, fmtUnit } from '../utils/format.js';
-
-const BUILTIN_GAME_MEDIA = [
-  {
-    media_id: 'GAME-1',
-    title: 'CABAL Revolution · ตลาดไอเทมพร้อมส่ง',
-    caption: 'เช็กสต็อกไอเทมพร้อมส่งแบบเรียลไทม์ จากผู้ฝากขายในเกม CABAL Revolution',
-    tag: 'CABAL Revolution',
-    image_url: './game/kv1.webp'
-  },
-  {
-    media_id: 'GAME-2',
-    title: 'อาวุธ · ชุดเกราะ · รถ RW3 ออปชั่นแน่น',
-    caption: 'เลือกดูรุ่นและค่าตีบวกที่มีในคิวตอนนี้ กดคัดลอกออเดอร์ส่งแอดมินได้ทันที',
-    tag: 'สินค้าแนะนำ',
-    image_url: './game/feature1.webp'
-  },
-  {
-    media_id: 'GAME-3',
-    title: 'Alz · Upgrade Core · ใบกันแตก',
-    caption: 'สต็อกเข้าใหม่ต่อเนื่อง ระบบคิวโปร่งใส พร้อมส่งทันทีหลังแอดมินยืนยัน',
-    tag: 'พร้อมส่ง',
-    image_url: './game/kv2.webp'
-  },
-  {
-    media_id: 'GAME-4',
-    title: 'เตรียมตัวลุย Mission War',
-    caption: 'เติมของและอุปกรณ์ให้พร้อมก่อนลงสนามรบ · แอดมินเพิ่มรูปโชว์สินค้าเองได้ในเมนู "หน้าร้าน"',
-    tag: 'Mission War',
-    image_url: './game/kv3.webp'
-  }
-];
 
 function ContactChip({ label, value, tone }) {
   const toast = useToast();
@@ -61,32 +29,17 @@ function ContactChip({ label, value, tone }) {
 }
 
 export default function Storefront({ onLoginClick, onBackToPortal, isLoggedIn = false }) {
-  const toast = useToast();
   const { data, error, loading, reload } = useAsync(() => api.publicCatalog(true), []);
   const [query, setQuery] = useState('');
   const [cat, setCat] = useState('ALL');
   const [onlyInStock, setOnlyInStock] = useState(false);
-  const [slide, setSlide] = useState(0);
-  const [paused, setPaused] = useState(false);
   const [lightbox, setLightbox] = useState(null); // { image_url, title, caption, tag }
   const [detail, setDetail] = useState(null);     // item object
 
-  const rawMedia = data?.media || [];
-  const media = rawMedia.length ? rawMedia : BUILTIN_GAME_MEDIA;
   const items = data?.items || [];
   const settings = data?.settings || {};
   const rawStats = data?.stats || { total_available: 0, item_types_in_stock: 0, total_items: 0, server: 'CABAL Revolution' };
   const stats = { ...rawStats, server: fmtGame(rawStats.server) };
-
-  useEffect(() => {
-    if (slide >= media.length) setSlide(0);
-  }, [media.length, slide]);
-
-  useEffect(() => {
-    if (media.length <= 1 || paused || lightbox) return undefined;
-    const t = setInterval(() => setSlide((s) => (s + 1) % media.length), 5500);
-    return () => clearInterval(t);
-  }, [media.length, paused, lightbox]);
 
   const categories = useMemo(() => {
     const set = new Set();
@@ -106,7 +59,6 @@ export default function Storefront({ onLoginClick, onBackToPortal, isLoggedIn = 
     });
   }, [items, cat, onlyInStock, query]);
 
-  const activeSlide = media[slide] || null;
   const hasContact = !!(settings.contact_facebook || settings.contact_line || settings.contact_discord);
 
   return (
@@ -156,143 +108,16 @@ export default function Storefront({ onLoginClick, onBackToPortal, isLoggedIn = 
           <ErrorBox error={error} onRetry={reload} />
         ) : (
           <>
-            {/* Hero + Showcase Carousel */}
-            <section className="grid lg:grid-cols-[1.05fr_1.35fr] gap-5 items-stretch animate-fade-up">
-              {/* Left: Store Info & Live Stats */}
-              <div className="card p-5 sm:p-6 flex flex-col justify-between gap-5 relative overflow-hidden">
-                <img src="./game/kv1.webp" alt="" aria-hidden className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-20 scale-105" />
-                <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-br from-ink-900/95 via-ink-800/85 to-blood-900/70" />
-                <div aria-hidden className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-arcane-600/20 blur-3xl" />
-                <div className="space-y-3 relative">
-                  <div className="inline-flex items-center gap-1.5 rounded-full border border-arcane-400/35 bg-arcane-600/15 px-3 py-1 text-[11px] font-semibold text-arcane-400">
-                    <Sparkles size={12} />สต็อกอัปเดตสดจากคิวขายร้าน
-                  </div>
-                  <h1 className="text-2xl sm:text-3xl font-display font-extrabold tracking-wide text-bone leading-tight">
-                    {settings.shop_title || 'CABAL Revolution Shop'}
-                  </h1>
-                  <p className="text-sm text-ash leading-relaxed">
-                    {settings.shop_subtitle || 'เช็กสต็อกไอเทม CABAL Revolution พร้อมส่งแบบเรียลไทม์'}
-                  </p>
-                  {settings.notice_text && (
-                    <div className="rounded-xl border border-arcane-500/30 bg-arcane-600/10 px-3.5 py-2.5 text-xs text-slate-200 leading-relaxed">
-                      {settings.notice_text}
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-4 relative">
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="rounded-xl border border-ink-600 bg-ink-900/60 p-3">
-                      <div className="flex items-center gap-1 text-[11px] text-slate-500"><PackageCheck size={12} className="text-emerald-300" />พร้อมส่ง</div>
-                      <div className="text-xl font-bold text-emerald-300 tabular-nums mt-0.5">{fmtNum(stats.total_available)}</div>
-                    </div>
-                    <div className="rounded-xl border border-ink-600 bg-ink-900/60 p-3">
-                      <div className="flex items-center gap-1 text-[11px] text-slate-500"><Layers size={12} className="text-gold-400" />มีของ</div>
-                      <div className="text-xl font-bold text-gold-400 tabular-nums mt-0.5">{fmtNum(stats.item_types_in_stock)} <span className="text-xs font-normal text-slate-500">แบบ</span></div>
-                    </div>
-                    <div className="rounded-xl border border-bone/15 bg-ink-900/70 p-3">
-                      <div className="flex items-center gap-1 text-[11px] text-ash"><Gamepad2 size={12} className="text-arcane-400" />เกม</div>
-                      <div className="text-xs sm:text-sm font-display font-bold text-bone truncate mt-1.5">{stats.server}</div>
-                    </div>
-                  </div>
-
-                  {hasContact && (
-                    <div className="flex flex-wrap items-center gap-2 pt-1">
-                      <ContactChip label="Facebook" value={settings.contact_facebook} tone="border-sky-500/30 bg-sky-500/10 text-sky-300 hover:bg-sky-500/20" />
-                      <ContactChip label="Line" value={settings.contact_line} tone="border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20" />
-                      <ContactChip label="Discord" value={settings.contact_discord} tone="border-arcane-500/30 bg-arcane-500/10 text-arcane-300 hover:bg-arcane-500/20" />
-                    </div>
-                  )}
-                </div>
+            {hasContact && (
+              <div className="flex flex-wrap items-center gap-2 animate-fade-up">
+                <ContactChip label="Facebook" value={settings.contact_facebook} tone="border-sky-500/30 bg-sky-500/10 text-sky-300 hover:bg-sky-500/20" />
+                <ContactChip label="Line" value={settings.contact_line} tone="border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20" />
+                <ContactChip label="Discord" value={settings.contact_discord} tone="border-arcane-500/30 bg-arcane-500/10 text-arcane-300 hover:bg-arcane-500/20" />
               </div>
-
-              {/* Right: Showcase Image Carousel */}
-              <div
-                className="card overflow-hidden flex flex-col"
-                onMouseEnter={() => setPaused(true)}
-                onMouseLeave={() => setPaused(false)}
-              >
-                {activeSlide ? (
-                  <>
-                    <div className="relative aspect-[16/9] bg-ink-950 overflow-hidden group">
-                      <img
-                        key={activeSlide.media_id}
-                        src={activeSlide.image_url}
-                        alt={activeSlide.title}
-                        onClick={() => setLightbox(activeSlide)}
-                        className="h-full w-full object-cover cursor-zoom-in animate-fade-in transition duration-500 group-hover:scale-[1.02]"
-                      />
-                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink-950/90 via-ink-950/20 to-transparent" />
-
-                      <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
-                        {activeSlide.tag ? (
-                          <span className="rounded-full border border-gold-500/40 bg-ink-950/80 backdrop-blur px-2.5 py-0.5 text-[11px] font-semibold text-gold-400">
-                            {activeSlide.tag}
-                          </span>
-                        ) : <span />}
-                        <button
-                          type="button"
-                          onClick={() => setLightbox(activeSlide)}
-                          title="ขยายดูรูปใหญ่"
-                          className="rounded-lg bg-ink-950/75 hover:bg-ink-800 border border-ink-600 p-1.5 text-slate-200 transition"
-                        >
-                          <Maximize2 size={14} />
-                        </button>
-                      </div>
-
-                      <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between gap-3">
-                        <div className="min-w-0">
-                          <h2 className="text-base sm:text-lg font-bold text-white truncate">{activeSlide.title}</h2>
-                          {activeSlide.caption && <p className="text-xs text-slate-300 line-clamp-2 mt-0.5">{activeSlide.caption}</p>}
-                        </div>
-                        {media.length > 1 && (
-                          <div className="flex items-center gap-1 shrink-0">
-                            <button type="button" aria-label="รูปก่อนหน้า"
-                              onClick={() => setSlide((s) => (s - 1 + media.length) % media.length)}
-                              className="rounded-lg bg-ink-950/80 hover:bg-ink-700 border border-ink-600 p-1.5 text-slate-200 transition active:scale-90">
-                              <ChevronLeft size={16} />
-                            </button>
-                            <button type="button" aria-label="รูปถัดไป"
-                              onClick={() => setSlide((s) => (s + 1) % media.length)}
-                              className="rounded-lg bg-ink-950/80 hover:bg-ink-700 border border-ink-600 p-1.5 text-slate-200 transition active:scale-90">
-                              <ChevronRight size={16} />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {media.length > 1 && (
-                      <div className="p-2.5 bg-ink-900/60 border-t border-ink-700 flex items-center gap-2 overflow-x-auto">
-                        {media.map((m, idx) => (
-                          <button
-                            key={m.media_id}
-                            type="button"
-                            onClick={() => setSlide(idx)}
-                            className={`relative shrink-0 h-12 w-20 rounded-lg overflow-hidden border transition ${
-                              idx === slide ? 'border-gold-400 ring-2 ring-gold-400/30' : 'border-ink-600 opacity-60 hover:opacity-100'
-                            }`}
-                          >
-                            <img src={m.image_url} alt={m.title} className="h-full w-full object-cover" />
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="flex-1 min-h-[240px] bg-gradient-to-br from-ink-900 via-ink-800 to-arcane-600/20 flex flex-col items-center justify-center p-6 text-center space-y-2">
-                    <div className="p-4 rounded-2xl bg-arcane-600/15 border border-arcane-500/30 text-arcane-400">
-                      <ShoppingBag size={36} />
-                    </div>
-                    <div className="font-semibold text-slate-200">พื้นที่รูปโชว์สินค้า / โปรโมชั่นร้าน</div>
-                    <p className="text-xs text-slate-500 max-w-sm">แอดมินสามารถเพิ่มรูปสเตตัสไอเทมหรือแบนเนอร์หน้าร้านได้ที่เมนู "หน้าร้าน"</p>
-                  </div>
-                )}
-              </div>
-            </section>
+            )}
 
             {/* Filter & Search Toolbar */}
-            <section className="card p-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3 animate-fade-up" style={{ animationDelay: '70ms' }}>
+            <section className="card p-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3 animate-fade-up">
               <div className="relative flex-1 max-w-md">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
                 <input
