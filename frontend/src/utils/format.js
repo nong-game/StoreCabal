@@ -1,3 +1,5 @@
+export const GAME_NAME = 'CABAL Revolution';
+export const fmtGame = (s) => (!s || s === 'Server 1' ? GAME_NAME : s);
 export const fmtDate = (iso) => {
   if (!iso) return '-';
   const d = new Date(iso);

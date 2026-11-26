@@ -1,7 +1,7 @@
 import { Boxes, Lock, BadgeCheck, RefreshCw } from 'lucide-react';
 import { api } from '../../services/api.js';
 import { Button, Card, ErrorBox, Spinner, Stat, useAsync } from '../../components/ui.jsx';
-import { fmtNum } from '../../utils/format.js';
+import { fmtGame, fmtNum } from '../../utils/format.js';
 
 export default function Overview() {
   const { data, error, loading, reload } = useAsync(() => api.adminOverview(), []);
@@ -9,7 +9,15 @@ export default function Overview() {
   if (error) return <ErrorBox error={error} onRetry={reload} />;
 
   const byServer = {};
-  data.rows.forEach((r) => { (byServer[r.server] ||= []).push(r); });
+  data.rows.forEach((r) => {
+    const srv = fmtGame(r.server);
+    (byServer[srv] ||= []).push(r);
+  });
+  const availByServer = {};
+  Object.entries(data.available_by_server || {}).forEach(([k, v]) => {
+    const srv = fmtGame(k);
+    availByServer[srv] = (availByServer[srv] || 0) + v;
+  });
 
   return (
     <>
@@ -23,7 +31,7 @@ export default function Overview() {
         <Stat label="ขายแล้ว" value={data.totals.SOLD} delay={2} icon={BadgeCheck} tone="text-arcane-400" />
       </div>
       {Object.entries(byServer).map(([server, rows], i) => (
-        <Card key={server} delay={3 + i} title={`${server} · พร้อมขาย ${fmtNum(data.available_by_server[server])} ชิ้น`}>
+        <Card key={server} delay={3 + i} title={`${server} · พร้อมขาย ${fmtNum(availByServer[server])} ชิ้น`}>
           <div className="overflow-x-auto -mx-4">
             <table className="w-full min-w-[520px]">
               <thead><tr><th className="th">ไอเทม</th><th className="th text-right">ในคลัง</th><th className="th text-right">รอขายในคิว</th><th className="th text-right">ติดจอง</th><th className="th text-right">ขายแล้ว</th><th className="th">ผู้ฝากขาย (รอขาย)</th></tr></thead>

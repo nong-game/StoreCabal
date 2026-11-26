@@ -6,7 +6,7 @@ import {
 import { api, IS_MOCK } from '../services/api.js';
 import { Button, Empty, ErrorBox, QtyInput, Spinner, useAsync, useToast } from '../components/ui.jsx';
 import ItemVisual from '../components/ItemVisual.jsx';
-import { fmtNum } from '../utils/format.js';
+import { fmtGame, fmtNum } from '../utils/format.js';
 
 function ContactChip({ label, value, tone }) {
   const toast = useToast();
@@ -43,7 +43,8 @@ export default function Storefront({ onLoginClick, onBackToPortal, isLoggedIn = 
   const media = data?.media || [];
   const items = data?.items || [];
   const settings = data?.settings || {};
-  const stats = data?.stats || { total_available: 0, item_types_in_stock: 0, total_items: 0, server: 'CABAL Revolution' };
+  const rawStats = data?.stats || { total_available: 0, item_types_in_stock: 0, total_items: 0, server: 'CABAL Revolution' };
+  const stats = { ...rawStats, server: fmtGame(rawStats.server) };
 
   useEffect(() => {
     if (slide >= media.length) setSlide(0);
@@ -361,7 +362,7 @@ export default function Storefront({ onLoginClick, onBackToPortal, isLoggedIn = 
                         </div>
 
                         <div className="pt-2 border-t border-ink-700/80 flex items-center justify-between text-xs">
-                          <span className="text-slate-500">{it.server}</span>
+                          <span className="text-slate-500">{fmtGame(it.server)}</span>
                           <span className="font-semibold text-arcane-400 group-hover:translate-x-0.5 transition">
                             {inStock ? 'ดูรายละเอียด / สั่งซื้อ →' : 'ดูรายละเอียด →'}
                           </span>
@@ -442,7 +443,7 @@ function ItemDetailModal({ item, settings, onClose, onZoom }) {
 
   const copyOrder = async () => {
     const lines = [
-      `สนใจสั่งซื้อสินค้า (${item.server})`,
+      `สนใจสั่งซื้อสินค้า (${fmtGame(item.server)})`,
       `• รายการ: ${item.item_name}`,
       ...(item.has_custom_option && pickedVar ? [`• รุ่น/ออปชั่น: ${pickedVar.variant || 'ไม่ระบุรุ่น'}`] : []),
       `• จำนวน: ${orderCount} ชิ้น`
@@ -477,7 +478,7 @@ function ItemDetailModal({ item, settings, onClose, onZoom }) {
         <div className="p-5 space-y-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="text-[11px] text-slate-500">{item.category || 'Item'} · {item.server}</div>
+              <div className="text-[11px] text-slate-500">{item.category || 'Item'} · {fmtGame(item.server)}</div>
               <h2 className="text-lg font-bold text-slate-100">{item.item_name}</h2>
             </div>
             {item.available_count > 0 ? (
