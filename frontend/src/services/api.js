@@ -56,10 +56,10 @@ async function call(action, payload = {}) {
   return json.data;
 }
 
-// Tiny read cache for rarely-changing lists: each Apps Script round trip costs ~1.5 s, so tab switches reuse it.
+// Tiny read cache for rarely-changing lists; pass force=true to bypass when user clicks Refresh.
 const memo = new Map();
-const cached = (key, fn, ttl = 60000) => {
-  const hit = memo.get(key);
+const cached = (key, fn, ttl = 10000, force = false) => {
+  const hit = !force && memo.get(key);
   if (hit && Date.now() - hit.t < ttl) return Promise.resolve(hit.v);
   return fn().then((v) => { memo.set(key, { v, t: Date.now() }); return v; });
 };
@@ -68,11 +68,11 @@ export const clearApiCache = () => memo.clear();
 
 export const api = {
   login: (username, password) => call('login', { username, password }),
-  publicCatalog: () => cached('public_catalog', () => call('public_catalog'), 15000),
+  publicCatalog: (force = false) => cached('public_catalog', () => call('public_catalog'), 5000, force),
   me: () => call('me'),
   changePassword: (old_password, new_password) => call('change_password', { old_password, new_password }),
-  masterItems: () => cached('items', () => call('master_items')),
-  variants: () => cached('variants', () => call('variants'), 20000),
+  masterItems: (force = false) => cached('items', () => call('master_items'), 10000, force),
+  variants: () => cached('variants', () => call('variants'), 10000),
 
   // supplier
   supplierDashboard: () => call('supplier_dashboard'),

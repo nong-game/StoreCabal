@@ -4,12 +4,13 @@ import { api } from '../../services/api.js';
 import { Button, Card, ErrorBox, Field, Spinner, useAsync, useToast } from '../../components/ui.jsx';
 import ImagePicker from '../../components/ImagePicker.jsx';
 import ItemVisual from '../../components/ItemVisual.jsx';
+import { fmtUnit } from '../../utils/format.js';
 
-const blank = { item_id: '', item_name: '', category: '', has_custom_option: false, image_url: '', description: '' };
+const blank = { item_id: '', item_name: '', category: '', unit: '', has_custom_option: false, image_url: '', description: '' };
 
 export default function MasterItems() {
   const toast = useToast();
-  const { data, error, loading, reload } = useAsync(() => api.masterItems(), []);
+  const { data, error, loading, reload } = useAsync(() => api.masterItems(true), []);
   const [form, setForm] = useState(blank);
   const [busy, setBusy] = useState(false);
   if (loading && !data) return <Spinner />;
@@ -22,6 +23,7 @@ export default function MasterItems() {
       item_id: i.item_id,
       item_name: i.item_name || '',
       category: i.category || '',
+      unit: i.unit || '',
       has_custom_option: !!i.has_custom_option,
       image_url: i.image_url || '',
       description: i.description || ''
@@ -41,7 +43,7 @@ export default function MasterItems() {
 
   const toggleVariants = async (i) => {
     try {
-      await api.itemUpsert({ item_id: i.item_id, item_name: i.item_name, category: i.category, has_custom_option: !i.has_custom_option });
+      await api.itemUpsert({ item_id: i.item_id, item_name: i.item_name, category: i.category, unit: i.unit, has_custom_option: !i.has_custom_option });
       toast(i.has_custom_option ? 'ปิดการแยกรุ่นแล้ว' : 'เปิดการแยกรุ่นแล้ว'); reload();
     } catch (x) { toast(x.message, 'err'); }
   };
@@ -58,7 +60,10 @@ export default function MasterItems() {
       >
         <form onSubmit={save} className="space-y-3">
           <Field label="ชื่อไอเทม"><input value={form.item_name} onChange={(e) => setForm({ ...form, item_name: e.target.value })} required maxLength={100} /></Field>
-          <Field label="หมวดหมู่"><input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} maxLength={50} placeholder="เช่น Currency, Material, Vehicle, Equipment" /></Field>
+          <div className="grid grid-cols-2 gap-2.5">
+            <Field label="หมวดหมู่"><input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} maxLength={50} placeholder="เช่น Vehicle, Material" /></Field>
+            <Field label="หน่วยเรียก" hint="เช่น M, ใบ, คัน, ชิ้น"><input value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} maxLength={30} placeholder="ชิ้น" /></Field>
+          </div>
           <Field label="คำอธิบายสั้น (แสดงหน้าลูกค้า)">
             <textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} maxLength={300} placeholder="รายละเอียดจุดเด่นสินค้า (ไม่บังคับ)" />
           </Field>
@@ -70,7 +75,7 @@ export default function MasterItems() {
           />
           <label className="flex items-center gap-2 !mb-0 cursor-pointer text-sm text-slate-300">
             <input type="checkbox" className="!w-4" checked={form.has_custom_option} onChange={(e) => setForm({ ...form, has_custom_option: e.target.checked })} />
-            ไอเทมนี้แยกรุ่น/ออปชั่น (เช่น รถ, อาวุธ) · ของอย่าง GEM ไม่ต้องติ๊ก
+            มีรุ่น/ออปชั่นเสริม (เช่น EX, +12) · ถ้าไม่มีไม่ต้องติ๊ก
           </label>
           <div className="flex gap-2">
             {isEdit && <Button type="button" variant="ghost" onClick={reset} className="flex-1">ยกเลิก</Button>}
@@ -83,8 +88,8 @@ export default function MasterItems() {
 
       <Card title={`ไอเทมทั้งหมด (${data.length})`}>
         <div className="overflow-x-auto -mx-4">
-          <table className="w-full min-w-[580px]">
-            <thead><tr><th className="th">ไอเทม</th><th className="th">หมวด</th><th className="th">ประเภท</th><th className="th" /></tr></thead>
+          <table className="w-full min-w-[600px]">
+            <thead><tr><th className="th">ไอเทม</th><th className="th">หมวด</th><th className="th">หน่วย</th><th className="th">ประเภท</th><th className="th" /></tr></thead>
             <tbody>
               {data.map((i) => (
                 <tr key={i.item_id} className={`tr-hover ${i.is_active ? '' : 'opacity-50'} ${form.item_id === i.item_id ? 'bg-arcane-600/10' : ''}`}>
@@ -98,6 +103,7 @@ export default function MasterItems() {
                     </div>
                   </td>
                   <td className="td text-slate-400">{i.category}</td>
+                  <td className="td text-xs text-slate-300 font-medium">{fmtUnit(i.unit)}</td>
                   <td className="td text-xs">
                     <button onClick={() => toggleVariants(i)} title="คลิกเพื่อสลับ" className={`rounded-full border px-2 py-0.5 transition active:scale-95 ${i.has_custom_option ? 'border-gold-500/40 text-gold-400 bg-gold-500/10' : 'border-ink-600 text-slate-400 hover:text-slate-200'}`}>
                       {i.has_custom_option ? 'แยกรุ่น' : 'ทั่วไป'}

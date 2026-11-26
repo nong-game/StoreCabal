@@ -4,6 +4,7 @@ import { api } from '../../services/api.js';
 import { Button, Card, ErrorBox, QtyInput, Spinner, useAsync, useToast } from '../../components/ui.jsx';
 import FlowSteps from '../../components/FlowSteps.jsx';
 import { EX_OPTIONS, PLUS_OPTIONS, buildVariant, norm } from '../../utils/variant.js';
+import { fmtUnit } from '../../utils/format.js';
 
 const chip = (on) => `rounded-lg border px-3 py-1.5 text-sm transition active:scale-95 ${on
   ? 'border-arcane-500/70 bg-arcane-600/25 text-arcane-400 font-semibold shadow shadow-arcane-600/20'
@@ -39,8 +40,9 @@ export default function AddStock({ goTo }) {
     return Object.entries(m);
   }, [items]);
   const item = (items || []).find((i) => i.item_id === itemId);
+  const unit = fmtUnit(item?.unit);
   const note = item?.has_custom_option ? buildVariant(ex, plus) : '';
-  const label = item ? `${item.item_name}${note ? ` ${note}` : item.has_custom_option ? ' (ไม่ระบุรุ่น)' : ''}` : '';
+  const label = item ? `${item.item_name}${note ? ` ${note}` : ''}` : '';
   const count = Math.max(1, Math.floor(Number(qty)) || 1);
 
   if (loading && !items) return <Spinner />;
@@ -90,7 +92,7 @@ export default function AddStock({ goTo }) {
             </Step>
 
             {item?.has_custom_option && (
-              <Step n={2} title="เลือกรุ่น" hint="รุ่นเดียวกันจะต่อคิวเดียวกัน · ไม่เลือกเลย = ไม่ระบุรุ่น">
+              <Step n={2} title="เลือกรุ่น" hint="รุ่นเดียวกันจะต่อคิวเดียวกัน · ถ้าไม่มี + หรือ EX ไม่ต้องเลือก จะแสดงเป็นชื่อไอเทมเปล่าๆ">
                 <div className="space-y-3">
                   <div>
                     <div className="text-xs text-slate-400 mb-1.5">EX</div>
@@ -111,7 +113,7 @@ export default function AddStock({ goTo }) {
             )}
 
             {item && (
-              <Step n={item.has_custom_option ? 3 : 2} title="จำนวนชิ้น" hint="ระบบเก็บทีละชิ้น แต่ละชิ้นมีรหัส stock_uid ของตัวเอง">
+              <Step n={item.has_custom_option ? 3 : 2} title={`จำนวน (${unit})`} hint="ระบบเก็บทีละหน่วย แต่ละหน่วยมีรหัส stock_uid ของตัวเอง">
                 <div className="max-w-xs"><QtyInput value={qty} onChange={setQty} max={200} showMax={false} /></div>
               </Step>
             )}
@@ -128,7 +130,7 @@ export default function AddStock({ goTo }) {
                 <div className="font-semibold text-gold-400">{label}</div>
                 <div className="mt-2 flex items-baseline justify-between">
                   <span className="text-xs text-slate-500">จำนวน</span>
-                  <span key={count} className="text-2xl font-bold text-slate-100 tabular-nums animate-pop-in">× {count}</span>
+                  <span key={count} className="text-2xl font-bold text-slate-100 tabular-nums animate-pop-in">× {count} {unit}</span>
                 </div>
               </div>
             ) : <p className="text-sm text-slate-500">เลือกไอเทมก่อน</p>}

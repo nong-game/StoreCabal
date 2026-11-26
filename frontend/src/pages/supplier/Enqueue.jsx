@@ -4,6 +4,7 @@ import { api } from '../../services/api.js';
 import { Button, Card, Confirm, ErrorBox, QtyInput, Spinner, useAsync, useToast } from '../../components/ui.jsx';
 import FlowSteps from '../../components/FlowSteps.jsx';
 import { norm } from '../../utils/variant.js';
+import { fmtUnit } from '../../utils/format.js';
 
 const byCreated = (a, b) => (a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : 0);
 
@@ -23,7 +24,7 @@ export default function Enqueue({ goTo, params }) {
     const m = new Map();
     (stock.data || []).filter((r) => r.status === 'STOCKED').forEach((r) => {
       const k = `${r.item_id}|${norm(r.custom_note)}`;
-      if (!m.has(k)) m.set(k, { key: k, item_id: r.item_id, item_name: r.item_name, note: r.custom_note, items: [] });
+      if (!m.has(k)) m.set(k, { key: k, item_id: r.item_id, item_name: r.item_name, unit: r.unit, note: r.custom_note, items: [] });
       m.get(k).items.push(r);
     });
     return [...m.values()].map((g) => ({ ...g, items: g.items.sort(byCreated) })).sort((a, b) => a.item_name.localeCompare(b.item_name, 'th') || norm(a.note).localeCompare(norm(b.note)));
@@ -119,17 +120,17 @@ export default function Enqueue({ goTo, params }) {
                 <div className="flex items-center gap-2 text-sm font-semibold text-slate-100"><ListPlus size={16} className="text-arcane-400" />เข้าคิวขาย</div>
                 <div className="rounded-lg border border-ink-600 bg-ink-900/50 p-3">
                   <div className="font-semibold text-gold-400">{label(g)}</div>
-                  <div className="text-xs text-slate-500">ในคลัง {g.items.length} ชิ้น</div>
+                  <div className="text-xs text-slate-500">ในคลัง {g.items.length} {fmtUnit(g.unit)}</div>
                 </div>
                 <div>
                   <div className="text-xs text-slate-400 mb-1.5">จำนวนที่จะเข้าคิว</div>
                   <QtyInput value={qty} onChange={setQty} max={g.items.length} />
                 </div>
                 <div className="flex items-center justify-between rounded-lg bg-ink-900/50 border border-ink-600 px-3 py-2">
-                  <span className="text-xs text-slate-400">{n} ชิ้น <ArrowRight size={12} className="inline" /> 1 คิว</span>
+                  <span className="text-xs text-slate-400">{n} {fmtUnit(g.unit)} <ArrowRight size={12} className="inline" /> 1 คิว</span>
                   <span key={`${sel}-${lotsAhead(g)}`} className="text-sm font-bold text-gold-400 animate-pop-in">ได้คิวที่ {lotsAhead(g) + 1}</span>
                 </div>
-                <Button variant="gold" className="w-full" loading={busy && !askWithdraw} onClick={enqueue}><ListPlus size={16} />เข้าคิว {n} ชิ้น</Button>
+                <Button variant="gold" className="w-full" loading={busy && !askWithdraw} onClick={enqueue}><ListPlus size={16} />เข้าคิว {n} {fmtUnit(g.unit)}</Button>
                 <button type="button" onClick={() => setAskWithdraw(true)} className="w-full flex items-center justify-center gap-1.5 text-xs text-slate-500 hover:text-rose-300 transition">
                   <Undo2 size={13} />ถอน {n} ชิ้นออกจากคลัง
                 </button>

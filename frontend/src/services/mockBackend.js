@@ -62,13 +62,13 @@ function seed() {
   ];
   const items = [];
   [
-    ['Alz', 'Currency', false, 'สกุลเงินหลักสำหรับซื้อขายในเกม'],
-    ['Upgrade Core', 'Material', false, 'หินอัปเกรดอุปกรณ์'],
-    ['Safeguard (ใบกันแตก)', 'Material', false, 'ใบป้องกันไอเทมแตกเวลาตีบวก'],
-    ['รถ RW3 EX 2 (มีออปชั่น)', 'Vehicle', true, 'มอเตอร์ไซค์ยอดนิยม เลือกระดับ EX และ + ได้'],
-    ['Weapon / Armor (มีออปชั่น)', 'Equipment', true, 'อาวุธและชุดเกราะคัดออปชั่น']
-  ].forEach(([item_name, category, has_custom_option, description], j) =>
-    items.push({ item_id: `I-${j + 1}`, item_name, category, server: GAME_NAME, has_custom_option, is_active: true, image_url: '', description }));
+    ['Alz', 'Currency', false, 'สกุลเงินหลักสำหรับซื้อขายในเกม', 'M'],
+    ['Upgrade Core', 'Material', false, 'หินอัปเกรดอุปกรณ์', 'ก้อน'],
+    ['Safeguard (ใบกันแตก)', 'Material', false, 'ใบป้องกันไอเทมแตกเวลาตีบวก', 'ใบ'],
+    ['รถ RW3 EX 2 (มีออปชั่น)', 'Vehicle', true, 'มอเตอร์ไซค์ยอดนิยม เลือกระดับ EX และ + ได้', 'คัน'],
+    ['Weapon / Armor (มีออปชั่น)', 'Equipment', true, 'อาวุธและชุดเกราะคัดออปชั่น', 'ชิ้น']
+  ].forEach(([item_name, category, has_custom_option, description, unit], j) =>
+    items.push({ item_id: `I-${j + 1}`, item_name, category, server: GAME_NAME, has_custom_option, is_active: true, image_url: '', description, unit }));
   const stock = [];
   let n = 0;
   const add = (supplier_id, item_id, server, count, note = '', stocked = false) => {
@@ -101,6 +101,11 @@ function load() {
         if (it.image_url === undefined) { it.image_url = ''; dirty = true; }
         if (it.description === undefined) { it.description = ''; dirty = true; }
         if (it.server === 'Server 1') { it.server = GAME_NAME; dirty = true; }
+        if (!it.unit) {
+          const n = String(it.item_name || '').toLowerCase();
+          it.unit = /\balz\b/.test(n) ? 'M' : /safeguard|ใบกันแตก/.test(n) ? 'ใบ' : /rw3|blue|รถ|bike/.test(n) ? 'คัน' : /core/.test(n) ? 'ก้อน' : 'ชิ้น';
+          dirty = true;
+        }
       });
       (db.stock || []).forEach((s) => {
         if (s.server === 'Server 1') { s.server = GAME_NAME; dirty = true; }
@@ -224,7 +229,8 @@ const H = {
     const lp = lotPositions(db);
     return db.stock.map((s, _i) => ({ ...s, _i })).filter((s) => s.supplier_id === a.user_id).sort((x, y) => -fifo(x, y)).map((s) => {
       const pos = s.status === 'AVAILABLE' ? lp.pos[s.stock_uid] : null;
-      return { ...clean(s), item_name: db.items.find((i) => i.item_id === s.item_id)?.item_name || s.item_id,
+      const it = db.items.find((i) => i.item_id === s.item_id);
+      return { ...clean(s), item_name: it?.item_name || s.item_id, unit: it?.unit || 'ชิ้น',
         queue_position: pos || null, queue_total: pos ? lp.total(lp.key[s.stock_uid]) : null };
     });
   },
@@ -300,7 +306,7 @@ const H = {
     const queues = new Map();
     sorted(db).forEach((s) => {
       const k = vkey(s); const it = item(s.item_id);
-      if (!queues.has(k)) queues.set(k, { key: k, item_id: s.item_id, item_name: it.item_name || s.item_id, category: it.category || '', has_custom_option: !!it.has_custom_option, variant: s.custom_note || '', pieces: 0, lots: [] });
+      if (!queues.has(k)) queues.set(k, { key: k, item_id: s.item_id, item_name: it.item_name || s.item_id, category: it.category || '', unit: it.unit || 'ชิ้น', has_custom_option: !!it.has_custom_option, variant: s.custom_note || '', pieces: 0, lots: [] });
       const q = queues.get(k); const lid = s.lot_id || s.stock_uid;
       let L = q.lots.find((x) => x.lot_id === lid);
       if (!L) { L = { lot_id: lid, supplier_id: s.supplier_id, shop_name: shop(db, s.supplier_id), count: 0, queued_at: s.queued_at || s.created_at, uids: [] }; q.lots.push(L); }
@@ -384,6 +390,7 @@ const H = {
         has_custom_option: !!it.has_custom_option,
         image_url: it.image_url || '',
         description: it.description || '',
+        unit: it.unit || 'ชิ้น',
         available_count: counts[it.item_id] || 0,
         variants: it.has_custom_option ? list : []
       };
@@ -402,6 +409,7 @@ const H = {
     const data = { item_name, category: String(p.category || '').trim(), server, has_custom_option: !!p.has_custom_option };
     if (p.image_url !== undefined) data.image_url = String(p.image_url || '').trim();
     if (p.description !== undefined) data.description = String(p.description || '').trim().slice(0, 300);
+    if (p.unit !== undefined) data.unit = String(p.unit || '').trim().slice(0, 30) || 'ชิ้น';
     if (p.item_id) {
       const it = db.items.find((i) => i.item_id === p.item_id); if (!it) throw new E('ไม่พบไอเทม', 'NOT_FOUND');
       const live = db.stock.some((s) => s.item_id === it.item_id && ['AVAILABLE', 'RESERVED'].includes(s.status) && norm(s.custom_note) !== '');
@@ -409,7 +417,7 @@ const H = {
       Object.assign(it, data); return it;
     }
     if (db.items.some((i) => i.item_name === item_name && i.server === server)) throw new E('มีไอเทมนี้ในเกมนี้แล้ว', 'CONFLICT');
-    const row = { item_id: uid('I'), image_url: '', description: '', ...data, is_active: true }; db.items.push(row); return row;
+    const row = { item_id: uid('I'), image_url: '', description: '', unit: 'ชิ้น', ...data, is_active: true }; db.items.push(row); return row;
   },
   item_toggle(db, p) {
     const it = db.items.find((i) => i.item_id === p.item_id); if (!it) throw new E('ไม่พบไอเทม', 'NOT_FOUND');

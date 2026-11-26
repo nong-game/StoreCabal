@@ -1,5 +1,14 @@
 export const GAME_NAME = 'CABAL Revolution';
 export const fmtGame = (s) => (!s || s === 'Server 1' ? GAME_NAME : s);
+export const fmtUnit = (u) => String(u || '').trim() || 'ชิ้น';
+export function defaultUnit(name) {
+  const n = String(name || '').toLowerCase();
+  if (/\balz\b/.test(n)) return 'M';
+  if (/safeguard|ใบกันแตก/.test(n)) return 'ใบ';
+  if (/rw3|blue|รถ|bike/.test(n)) return 'คัน';
+  if (/core/.test(n)) return 'ก้อน';
+  return 'ชิ้น';
+}
 export const fmtDate = (iso) => {
   if (!iso) return '-';
   const d = new Date(iso);

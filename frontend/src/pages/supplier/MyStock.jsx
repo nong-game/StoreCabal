@@ -3,7 +3,7 @@ import { Undo2, RefreshCw, ChevronDown, ListPlus, LogOut, ListOrdered, Layers } 
 import FlowSteps from '../../components/FlowSteps.jsx';
 import { api } from '../../services/api.js';
 import { Badge, Button, Card, Confirm, ErrorBox, QtyInput, Spinner, useAsync, useToast } from '../../components/ui.jsx';
-import { fmtDate } from '../../utils/format.js';
+import { fmtDate, fmtUnit } from '../../utils/format.js';
 
 const FILTERS = [
   ['ACTIVE', 'กำลังขาย'], ['AVAILABLE', 'ในคิว'], ['RESERVED', 'ติดจอง'], ['SOLD', 'ขายแล้ว'], ['WITHDRAWN', 'ถอนออก'], ['ALL', 'ทั้งหมด']
@@ -25,7 +25,7 @@ function buildGroups(rows) {
     if (r.status === 'AVAILABLE') k = `AVAILABLE|${r.lot_id || r.stock_uid}`;
     else if (r.status === 'STOCKED') k = `STOCKED|${r.item_id}|${norm(r.custom_note)}`;
     else k = [r.status, r.item_id, norm(r.custom_note), r.order_ref].join('|');
-    if (!m.has(k)) m.set(k, { key: k, status: r.status, item_name: r.item_name, note: r.custom_note, order_ref: r.order_ref, items: [] });
+    if (!m.has(k)) m.set(k, { key: k, status: r.status, item_name: r.item_name, unit: r.unit, note: r.custom_note, order_ref: r.order_ref, items: [] });
     m.get(k).items.push(r);
   });
   const list = [...m.values()];
@@ -107,7 +107,7 @@ export default function MyStock({ goTo }) {
         <div className="font-medium text-slate-100">{g.item_name}{g.note && <span className="ml-1.5 text-xs text-gold-400">{g.note}</span>}</div>
         {g.order_ref && <div className="text-[11px] text-slate-500">ออเดอร์ {g.order_ref}</div>}
       </div>
-      <span className="rounded-md bg-ink-700 border border-ink-600 px-2 py-0.5 text-sm font-bold text-slate-100 tabular-nums">× {g.items.length}</span>
+      <span className="rounded-md bg-ink-700 border border-ink-600 px-2 py-0.5 text-sm font-bold text-slate-100 tabular-nums">× {g.items.length} {fmtUnit(g.unit)}</span>
     </div>
   );
   const piecesAction = (g) => (p) => ask('withdraw', g, [p]);

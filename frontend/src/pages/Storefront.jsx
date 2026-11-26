@@ -6,7 +6,7 @@ import {
 import { api, IS_MOCK } from '../services/api.js';
 import { Button, Empty, ErrorBox, QtyInput, Spinner, useAsync, useToast } from '../components/ui.jsx';
 import ItemVisual from '../components/ItemVisual.jsx';
-import { fmtGame, fmtNum } from '../utils/format.js';
+import { fmtGame, fmtNum, fmtUnit } from '../utils/format.js';
 
 const BUILTIN_GAME_MEDIA = [
   {
@@ -62,7 +62,7 @@ function ContactChip({ label, value, tone }) {
 
 export default function Storefront({ onLoginClick, onBackToPortal, isLoggedIn = false }) {
   const toast = useToast();
-  const { data, error, loading, reload } = useAsync(() => api.publicCatalog(), []);
+  const { data, error, loading, reload } = useAsync(() => api.publicCatalog(true), []);
   const [query, setQuery] = useState('');
   const [cat, setCat] = useState('ALL');
   const [onlyInStock, setOnlyInStock] = useState(false);
@@ -101,7 +101,7 @@ export default function Storefront({ onLoginClick, onBackToPortal, isLoggedIn = 
       if (onlyInStock && it.available_count <= 0) return false;
       if (!q) return true;
       const inName = it.item_name.toLowerCase().includes(q) || (it.description || '').toLowerCase().includes(q) || (it.category || '').toLowerCase().includes(q);
-      const inVar = (it.variants || []).some((v) => (v.variant || 'ไม่ระบุรุ่น').toLowerCase().includes(q));
+      const inVar = (it.variants || []).some((v) => v.variant && v.variant.toLowerCase().includes(q));
       return inName || inVar;
     });
   }, [items, cat, onlyInStock, query]);
@@ -338,6 +338,9 @@ export default function Storefront({ onLoginClick, onBackToPortal, isLoggedIn = 
               <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filtered.map((it, idx) => {
                   const inStock = it.available_count > 0;
+                  const unit = fmtUnit(it.unit);
+                  const namedVars = (it.variants || []).filter((v) => v.variant);
+                  const showVariants = it.has_custom_option && namedVars.length > 0;
                   return (
                     <article
                       key={it.item_id}
@@ -355,7 +358,7 @@ export default function Storefront({ onLoginClick, onBackToPortal, isLoggedIn = 
                         <div className="absolute top-2.5 right-2.5">
                           {inStock ? (
                             <span className="rounded-full bg-emerald-950/90 backdrop-blur border border-emerald-500/40 px-2.5 py-0.5 text-[11px] font-bold text-emerald-300 tabular-nums">
-                              พร้อมส่ง {fmtNum(it.available_count)}
+                              พร้อมส่ง {fmtNum(it.available_count)} {unit}
                             </span>
                           ) : (
                             <span className="rounded-full bg-ink-950/85 backdrop-blur border border-ink-600 px-2.5 py-0.5 text-[11px] text-slate-400">
@@ -369,7 +372,7 @@ export default function Storefront({ onLoginClick, onBackToPortal, isLoggedIn = 
                         <div className="space-y-1.5">
                           <div className="flex items-start justify-between gap-2">
                             <h3 className="font-bold text-slate-100 group-hover:text-gold-400 transition">{it.item_name}</h3>
-                            {it.has_custom_option && (
+                            {showVariants && (
                               <span className="shrink-0 text-[10px] text-gold-400 border border-gold-500/30 bg-gold-500/10 rounded px-1.5 py-0.5">
                                 แยกรุ่น
                               </span>
@@ -378,12 +381,12 @@ export default function Storefront({ onLoginClick, onBackToPortal, isLoggedIn = 
                           {it.description && (
                             <p className="text-xs text-slate-400 line-clamp-2">{it.description}</p>
                           )}
-                          {it.has_custom_option && it.variants?.length > 0 && (
+                          {showVariants && (
                             <div className="flex flex-wrap gap-1 pt-1">
                               {it.variants.slice(0, 4).map((v, vi) => (
                                 <span key={vi} className="inline-flex items-center gap-1 rounded-md border border-ink-600 bg-ink-900/70 px-2 py-0.5 text-[11px] text-slate-300">
-                                  <span className="text-gold-400 font-medium">{v.variant || 'ไม่ระบุรุ่น'}</span>
-                                  <span className="text-slate-500">· {v.count}</span>
+                                  <span className="text-gold-400 font-medium">{v.variant || it.item_name}</span>
+                                  <span className="text-slate-500">· {v.count} {unit}</span>
                                 </span>
                               ))}
                               {it.variants.length > 4 && (
@@ -468,7 +471,9 @@ function ItemDetailModal({ item, settings, onClose, onZoom }) {
   }, [item, onClose]);
 
   if (!item) return null;
+  const unit = fmtUnit(item.unit);
   const variants = item.has_custom_option ? (item.variants || []) : [];
+  const hasNamedVariants = variants.some((v) => v.variant);
   const pickedVar = variants[selVar] || null;
   const maxQty = item.has_custom_option ? (pickedVar?.count || 0) : item.available_count;
   const orderCount = maxQty > 0 ? Math.max(1, Math.min(Number(qty) || 1, maxQty)) : 1;
@@ -477,8 +482,8 @@ function ItemDetailModal({ item, settings, onClose, onZoom }) {
     const lines = [
       `สนใจสั่งซื้อสินค้า (${fmtGame(item.server)})`,
       `• รายการ: ${item.item_name}`,
-      ...(item.has_custom_option && pickedVar ? [`• รุ่น/ออปชั่น: ${pickedVar.variant || 'ไม่ระบุรุ่น'}`] : []),
-      `• จำนวน: ${orderCount} ชิ้น`
+      ...(item.has_custom_option && pickedVar?.variant ? [`• รุ่น/ออปชั่น: ${pickedVar.variant}`] : []),
+      `• จำนวน: ${orderCount} ${unit}`
     ];
     try {
       await navigator.clipboard.writeText(lines.join('\n'));
@@ -515,7 +520,7 @@ function ItemDetailModal({ item, settings, onClose, onZoom }) {
             </div>
             {item.available_count > 0 ? (
               <span className="shrink-0 rounded-full border border-emerald-500/40 bg-emerald-500/15 px-3 py-0.5 text-xs font-bold text-emerald-300 tabular-nums">
-                พร้อมส่ง {fmtNum(item.available_count)} ชิ้น
+                พร้อมส่ง {fmtNum(item.available_count)} {unit}
               </span>
             ) : (
               <span className="shrink-0 rounded-full border border-ink-600 bg-ink-700 px-3 py-0.5 text-xs text-slate-400">
@@ -526,36 +531,32 @@ function ItemDetailModal({ item, settings, onClose, onZoom }) {
 
           {item.description && <p className="text-sm text-slate-300 leading-relaxed">{item.description}</p>}
 
-          {item.has_custom_option && (
+          {item.has_custom_option && hasNamedVariants && (
             <div className="space-y-2">
               <div className="text-xs font-medium text-slate-400">รุ่น / ออปชั่นที่มีพร้อมส่ง</div>
-              {!variants.length ? (
-                <div className="rounded-lg border border-ink-600 bg-ink-900/50 p-3 text-xs text-slate-500">ยังไม่มีรุ่นที่พร้อมส่งในคิวตอนนี้</div>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {variants.map((v, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => { setSelVar(idx); setQty(1); }}
-                      className={`rounded-lg border px-3 py-1.5 text-xs transition active:scale-95 ${
-                        selVar === idx
-                          ? 'border-gold-400 bg-gold-500/15 text-gold-300 font-semibold'
-                          : 'border-ink-600 bg-ink-900/50 text-slate-300 hover:border-slate-500'
-                      }`}
-                    >
-                      {v.variant || 'ไม่ระบุรุ่น'} <span className="ml-1 text-emerald-300 font-bold">({v.count})</span>
-                    </button>
-                  ))}
-                </div>
-              )}
+              <div className="flex flex-wrap gap-2">
+                {variants.map((v, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => { setSelVar(idx); setQty(1); }}
+                    className={`rounded-lg border px-3 py-1.5 text-xs transition active:scale-95 ${
+                      selVar === idx
+                        ? 'border-gold-400 bg-gold-500/15 text-gold-300 font-semibold'
+                        : 'border-ink-600 bg-ink-900/50 text-slate-300 hover:border-slate-500'
+                    }`}
+                  >
+                    {v.variant || item.item_name} <span className="ml-1 text-emerald-300 font-bold">({v.count} {unit})</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
           {maxQty > 0 && (
             <div className="rounded-xl border border-ink-600 bg-ink-900/50 p-3.5 space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <span className="text-xs text-slate-400">จำนวนที่ต้องการ</span>
+                <span className="text-xs text-slate-400">จำนวนที่ต้องการ ({unit})</span>
                 <div className="w-full sm:w-56"><QtyInput value={qty} onChange={setQty} max={maxQty} /></div>
               </div>
               <Button variant="gold" className="w-full" onClick={copyOrder}>

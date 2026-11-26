@@ -29,7 +29,7 @@ var CONFIG = {
 
 var SCHEMA = {
   Users:               ['user_id', 'username', 'password_hash', 'shop_name', 'role', 'status', 'created_at'],
-  Master_Items:        ['item_id', 'item_name', 'category', 'server', 'has_custom_option', 'is_active', 'image_url', 'description'],
+  Master_Items:        ['item_id', 'item_name', 'category', 'server', 'has_custom_option', 'is_active', 'image_url', 'description', 'unit'],
   Stock_Items:         ['stock_uid', 'item_id', 'server', 'supplier_id', 'custom_note', 'price_cost', 'status', 'created_at', 'updated_at', 'order_ref', 'lot_id', 'queued_at'],
   Queue_Logs:          ['log_id', 'stock_uid', 'action', 'actor_id', 'timestamp', 'note'],
   Storefront_Media:    ['media_id', 'title', 'caption', 'tag', 'image_url', 'sort_order', 'is_active', 'created_at'],
@@ -38,7 +38,7 @@ var SCHEMA = {
 // Columns that must stay text (ISO timestamps / ids) so Sheets never auto-converts them
 var TEXT_COLS = {
   Users: ['user_id', 'username', 'password_hash', 'created_at'],
-  Master_Items: ['item_id', 'image_url', 'description'],
+  Master_Items: ['item_id', 'image_url', 'description', 'unit'],
   Stock_Items: ['stock_uid', 'item_id', 'supplier_id', 'created_at', 'updated_at', 'order_ref', 'lot_id', 'queued_at'],
   Queue_Logs: ['log_id', 'stock_uid', 'actor_id', 'timestamp'],
   Storefront_Media: ['media_id', 'title', 'caption', 'tag', 'image_url', 'created_at'],
@@ -89,6 +89,115 @@ function ApiError_(message, code) {
   return e;
 }
 
+/* ============================== SPREADSHEET TRIGGERS & MENU ============================== */
+/** Adds a custom menu inside Google Sheets so staff can sync pasted/edited rows anytime. */
+function onOpen() {
+  try {
+    SpreadsheetApp.getUi()
+      .createMenu('CABAL Store')
+      .addItem('เติม ID / เวลา / สถานะให้แถวที่เพิ่มเอง (Sync Sheet)', 'syncSheetRows')
+      .addSeparator()
+      .addItem('ตั้งค่าตาราง / Dropdown (Setup Database)', 'setupDatabase')
+      .addToUi();
+  } catch (e) { /* headless execution */ }
+}
+
+/** Runs automatically whenever a human edits cells directly inside Google Sheets. */
+function onEdit(e) {
+  if (!e || !e.range) return;
+  var sh = e.range.getSheet();
+  var name = sh.getName();
+  Db.invalidate(name);
+  if (['Master_Items', 'Stock_Items', 'Storefront_Media'].indexOf(name) < 0) return;
+  var start = e.range.getRow();
+  var end = e.range.getLastRow();
+  if (end < 2) return;
+  if (start < 2) start = 2;
+  syncRangeRows_(sh, name, start, end);
+}
+
+/** Batch-fills missing IDs, timestamps, defaults, and name-to-ID lookups for rows edited/pasted in Sheets. */
+function syncSheetRows() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  ['Master_Items', 'Stock_Items', 'Storefront_Media'].forEach(function (name) {
+    var sh = ss.getSheetByName(name);
+    if (!sh || sh.getLastRow() < 2) return;
+    syncRangeRows_(sh, name, 2, sh.getLastRow());
+  });
+  Db._mem = {};
+  try { SpreadsheetApp.getActiveSpreadsheet().toast('ซิงก์ข้อมูลและเติม ID/เวลา เรียบร้อยแล้ว', 'CABAL Store', 4); } catch (e) {}
+}
+
+function syncRangeRows_(sh, name, startRow, endRow) {
+  var headers = SCHEMA[name], cols = headers.length;
+  var numRows = endRow - startRow + 1;
+  if (numRows < 1 || sh.getMaxColumns() < cols) return;
+  var rng = sh.getRange(startRow, 1, numRows, cols);
+  var vals = rng.getValues();
+  var dirty = false, now = nowIso_();
+
+  var itemLookup = null, userLookup = null;
+  if (name === 'Stock_Items') {
+    itemLookup = {};
+    Db.all('Master_Items').forEach(function (it) {
+      if (it.item_id) itemLookup[String(it.item_id).toLowerCase()] = it.item_id;
+      if (it.item_name) itemLookup[str_(it.item_name).toLowerCase()] = it.item_id;
+    });
+    userLookup = {};
+    Db.all('Users').forEach(function (u) {
+      if (u.user_id) userLookup[String(u.user_id).toLowerCase()] = u.user_id;
+      if (u.username) userLookup[str_(u.username).toLowerCase()] = u.user_id;
+      if (u.shop_name) userLookup[str_(u.shop_name).toLowerCase()] = u.user_id;
+    });
+  }
+
+  for (var r = 0; r < vals.length; r++) {
+    var row = vals[r];
+    var nonEmpty = row.some(function (cell) { return str_(cell) !== ''; });
+    if (!nonEmpty) continue;
+
+    if (name === 'Master_Items') {
+      var cId = headers.indexOf('item_id'), cName = headers.indexOf('item_name'), cSrv = headers.indexOf('server'),
+          cOpt = headers.indexOf('has_custom_option'), cAct = headers.indexOf('is_active'), cUnit = headers.indexOf('unit');
+      if (str_(row[cName]) && !str_(row[cId])) { row[cId] = newUid_('I'); dirty = true; }
+      if (!str_(row[cSrv]) || row[cSrv] === 'Server 1') { row[cSrv] = CONFIG.SERVER_NAME; dirty = true; }
+      if (row[cOpt] === '') { row[cOpt] = false; dirty = true; }
+      if (row[cAct] === '') { row[cAct] = true; dirty = true; }
+      if (!str_(row[cUnit])) { row[cUnit] = defaultUnitForName_(row[cName]); dirty = true; }
+    } else if (name === 'Stock_Items') {
+      var sUid = headers.indexOf('stock_uid'), sItem = headers.indexOf('item_id'), sSrv = headers.indexOf('server'),
+          sSup = headers.indexOf('supplier_id'), sSt = headers.indexOf('status'), sCr = headers.indexOf('created_at'),
+          sUp = headers.indexOf('updated_at'), sLot = headers.indexOf('lot_id'), sQ = headers.indexOf('queued_at');
+      if (!str_(row[sItem]) && !str_(row[sUid]) && !str_(row[sSup])) continue;
+      if (!str_(row[sUid])) { row[sUid] = newUid_('STK'); dirty = true; }
+      var rawItem = str_(row[sItem]).toLowerCase();
+      if (rawItem && itemLookup[rawItem] && row[sItem] !== itemLookup[rawItem]) { row[sItem] = itemLookup[rawItem]; dirty = true; }
+      var rawSup = str_(row[sSup]).toLowerCase();
+      if (rawSup && userLookup[rawSup] && row[sSup] !== userLookup[rawSup]) { row[sSup] = userLookup[rawSup]; dirty = true; }
+      if (!str_(row[sSrv]) || row[sSrv] === 'Server 1') { row[sSrv] = CONFIG.SERVER_NAME; dirty = true; }
+      var normSt = normalizeStatus_(row[sSt] || STATUS.AVAILABLE);
+      if (row[sSt] !== normSt) { row[sSt] = normSt; dirty = true; }
+      if (!str_(row[sCr])) { row[sCr] = now; dirty = true; }
+      row[sUp] = now; dirty = true;
+      if (normSt === STATUS.AVAILABLE) {
+        if (!str_(row[sQ])) { row[sQ] = (row[sCr] instanceof Date ? row[sCr].toISOString() : str_(row[sCr])) || now; dirty = true; }
+        if (!str_(row[sLot])) { row[sLot] = row[sUid]; dirty = true; }
+      }
+    } else if (name === 'Storefront_Media') {
+      var mId = headers.indexOf('media_id'), mTitle = headers.indexOf('title'), mImg = headers.indexOf('image_url'),
+          mAct = headers.indexOf('is_active'), mCr = headers.indexOf('created_at');
+      if (!str_(row[mTitle]) && !str_(row[mImg])) continue;
+      if (!str_(row[mId])) { row[mId] = newUid_('M'); dirty = true; }
+      if (row[mAct] === '') { row[mAct] = true; dirty = true; }
+      if (!str_(row[mCr])) { row[mCr] = now; dirty = true; }
+    }
+  }
+  if (dirty) {
+    rng.setValues(vals.map(function (row) { return row.map(sanitize_); }));
+    Db.invalidate(name);
+  }
+}
+
 /* ============================== SETUP ============================== */
 /** Run once from the editor. Safe to re-run: only creates what is missing. */
 function setupDatabase() {
@@ -97,7 +206,7 @@ function setupDatabase() {
     var sh = ss.getSheetByName(name) || ss.insertSheet(name);
     var headers = SCHEMA[name];
     if (sh.getMaxColumns() < headers.length) sh.insertColumnsAfter(sh.getMaxColumns(), headers.length - sh.getMaxColumns());
-    // always (re)write the header row so newly added columns (e.g. facebook_id) appear on upgrade
+    // always (re)write the header row so newly added columns appear on upgrade
     sh.getRange(1, 1, 1, headers.length).setValues([headers])
       .setFontWeight('bold').setBackground('#1f2937').setFontColor('#ffffff');
     sh.setFrozenRows(1);
@@ -106,6 +215,18 @@ function setupDatabase() {
     });
     if (sh.getMaxColumns() > headers.length) sh.deleteColumns(headers.length + 1, sh.getMaxColumns() - headers.length);
   });
+
+  // Add status dropdown validation in Stock_Items so team edits in Sheets are clean & typo-free
+  var stockSh = ss.getSheetByName('Stock_Items');
+  var statusCol = SCHEMA.Stock_Items.indexOf('status') + 1;
+  if (stockSh && statusCol > 0 && stockSh.getMaxRows() > 1) {
+    var rule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(['STOCKED', 'AVAILABLE', 'RESERVED', 'SOLD', 'WITHDRAWN'], true)
+      .setAllowInvalid(true)
+      .build();
+    stockSh.getRange(2, statusCol, stockSh.getMaxRows() - 1, 1).setDataValidation(rule);
+  }
+
   var blank = ss.getSheetByName('Sheet1') || ss.getSheetByName('ชีต1');
   if (blank && ss.getSheets().length > 1 && blank.getLastRow() === 0) ss.deleteSheet(blank);
 
@@ -122,13 +243,7 @@ function setupDatabase() {
     console.log('=== ADMIN CREATED ===  username: admin   password: ' + pw + '   (change it after first login)');
   }
   seedMasterItemsIfEmpty_();
-  // Migrate legacy "Server 1" labels to CONFIG.SERVER_NAME (CABAL Revolution)
-  Db.all('Master_Items').forEach(function (it) {
-    if (it.server !== CONFIG.SERVER_NAME) { it.server = CONFIG.SERVER_NAME; Db.writeRow('Master_Items', it._row, it); }
-  });
-  Db.all('Stock_Items').forEach(function (s) {
-    if (s.server !== CONFIG.SERVER_NAME) { s.server = CONFIG.SERVER_NAME; Db.writeRow('Stock_Items', s._row, s); }
-  });
+  syncSheetRows();
   console.log('setupDatabase OK');
 }
 
@@ -149,9 +264,9 @@ function createAdminUser() {
 function seedMasterItemsIfEmpty_() {
   if (Db.all('Master_Items').length) return;
   var rows = [];
-  [['Alz', 'Currency', false, 'สกุลเงินหลักสำหรับซื้อขายในเกม'], ['Upgrade Core', 'Material', false, 'หินอัปเกรดอุปกรณ์'], ['Safeguard (ใบกันแตก)', 'Material', false, 'ใบป้องกันไอเทมแตกเวลาตีบวก'],
-   ['รถ RW3 EX 2 (มีออปชั่น)', 'Vehicle', true, 'มอเตอร์ไซค์ยอดนิยม เลือกระดับ EX และ + ได้'], ['Weapon / Armor (มีออปชั่น)', 'Equipment', true, 'อาวุธและชุดเกราะคัดออปชั่น']].forEach(function (x, j) {
-    rows.push({ item_id: 'I-' + (j + 1), item_name: x[0], category: x[1], server: CONFIG.SERVER_NAME, has_custom_option: x[2], is_active: true, image_url: '', description: x[3] });
+  [['Alz', 'Currency', false, 'สกุลเงินหลักสำหรับซื้อขายในเกม', 'M'], ['Upgrade Core', 'Material', false, 'หินอัปเกรดอุปกรณ์', 'ก้อน'], ['Safeguard (ใบกันแตก)', 'Material', false, 'ใบป้องกันไอเทมแตกเวลาตีบวก', 'ใบ'],
+   ['รถ RW3 EX 2 (มีออปชั่น)', 'Vehicle', true, 'มอเตอร์ไซค์ยอดนิยม เลือกระดับ EX และ + ได้', 'คัน'], ['Weapon / Armor (มีออปชั่น)', 'Equipment', true, 'อาวุธและชุดเกราะคัดออปชั่น', 'ชิ้น']].forEach(function (x, j) {
+    rows.push({ item_id: 'I-' + (j + 1), item_name: x[0], category: x[1], server: CONFIG.SERVER_NAME, has_custom_option: x[2], is_active: true, image_url: '', description: x[3], unit: x[4] });
   });
   Db.append('Master_Items', rows);
 }
@@ -159,7 +274,7 @@ function seedMasterItemsIfEmpty_() {
 /* ============================== DB LAYER ============================== */
 var Db = {
   _mem: {},                                   // per-execution memo of raw sheet values (one getValues per sheet per request)
-  CACHED: { Users: true, Master_Items: true, Storefront_Media: true, Storefront_Settings: true }, // small, read-mostly sheets are also cached across requests (60 s, cleared on every write)
+  CACHED: {},                                 // disabled cross-request cache so direct Google Sheets edits reflect immediately
   hasSheet: function (name) {
     return !!SpreadsheetApp.getActiveSpreadsheet().getSheetByName(name);
   },
@@ -170,38 +285,71 @@ var Db = {
   },
   raw: function (name) {
     if (this._mem[name]) return this._mem[name];
-    var cache = this.CACHED[name] ? CacheService.getScriptCache() : null, vals = null;
-    if (cache) {
-      var hit = cache.get('db:' + name);
-      if (hit) { try { vals = JSON.parse(hit); } catch (e) { vals = null; } }
-    }
-    if (!vals) {
-      var sh = this.sheet(name), last = sh.getLastRow(), cols = Math.min(SCHEMA[name].length, sh.getMaxColumns());
-      vals = last < 2 || cols < 1 ? [] : sh.getRange(2, 1, last - 1, cols).getValues();
-      if (cache) { try { cache.put('db:' + name, JSON.stringify(vals), 60); } catch (e) { /* >100KB: skip cache */ } }
-    }
+    var sh = this.sheet(name), last = sh.getLastRow(), cols = Math.min(SCHEMA[name].length, sh.getMaxColumns());
+    var vals = last < 2 || cols < 1 ? [] : sh.getRange(2, 1, last - 1, cols).getValues();
     this._mem[name] = vals;
     return vals;
   },
   invalidate: function (name) {
     delete this._mem[name];
-    if (this.CACHED[name]) CacheService.getScriptCache().remove('db:' + name);
+    try { CacheService.getScriptCache().remove('db:' + name); } catch (e) {}
   },
   /** Returns array of FRESH objects (safe to mutate); each has hidden _row (1-based sheet row) */
   all: function (name) {
     var headers = SCHEMA[name], vals = this.raw(name);
     var bools = BOOL_COLS[name] || [], nums = NUM_COLS[name] || [];
-    return vals.map(function (r, i) {
+    var rows = [];
+    for (var i = 0; i < vals.length; i++) {
+      var r = vals[i];
       var o = { _row: i + 2 };
       headers.forEach(function (h, c) {
         var v = c < r.length ? r[c] : '';
-        if (bools.indexOf(h) >= 0) v = (v === true || String(v).toUpperCase() === 'TRUE');
-        else if (nums.indexOf(h) >= 0) v = Number(v) || 0;
-        else if (v instanceof Date) v = v.toISOString();
+        if (bools.indexOf(h) >= 0) {
+          // If someone adds a row directly in Sheets and leaves is_active blank, treat it as true
+          v = (h === 'is_active' && str_(v) === '') ? true : (v === true || String(v).toUpperCase() === 'TRUE');
+        } else if (nums.indexOf(h) >= 0) {
+          v = Number(v) || 0;
+        } else if (v instanceof Date) {
+          v = v.toISOString();
+        }
         o[h] = v;
       });
-      return o;
-    });
+      // Skip completely empty spreadsheet rows
+      if (name === 'Master_Items') {
+        if (!str_(o.item_name) && !str_(o.item_id)) continue;
+        if (!str_(o.item_id)) o.item_id = 'ROW-' + o._row;
+        if (!str_(o.unit)) o.unit = defaultUnitForName_(o.item_name);
+      } else if (name === 'Stock_Items') {
+        if (!str_(o.item_id) && !str_(o.stock_uid) && !str_(o.supplier_id)) continue;
+        if (!str_(o.stock_uid)) o.stock_uid = 'ROW-' + o._row;
+        o.status = normalizeStatus_(o.status || STATUS.AVAILABLE);
+        if (!str_(o.created_at)) o.created_at = str_(o.updated_at) || str_(o.queued_at) || '1970-01-01T00:00:00.000Z';
+      } else if (name === 'Storefront_Media') {
+        if (!str_(o.title) && !str_(o.image_url)) continue;
+        if (!str_(o.media_id)) o.media_id = 'ROW-' + o._row;
+      }
+      rows.push(o);
+    }
+    if (name === 'Stock_Items' && rows.length) {
+      // Allow team members editing Sheets to type item_name / shop_name / username directly
+      var itemByKey = {}, userByKey = {};
+      this.all('Master_Items').forEach(function (it) {
+        if (it.item_id) itemByKey[String(it.item_id).toLowerCase()] = it.item_id;
+        if (it.item_name) itemByKey[str_(it.item_name).toLowerCase()] = it.item_id;
+      });
+      this.all('Users').forEach(function (u) {
+        if (u.user_id) userByKey[String(u.user_id).toLowerCase()] = u.user_id;
+        if (u.username) userByKey[str_(u.username).toLowerCase()] = u.user_id;
+        if (u.shop_name) userByKey[str_(u.shop_name).toLowerCase()] = u.user_id;
+      });
+      rows.forEach(function (s) {
+        var ik = str_(s.item_id).toLowerCase();
+        if (ik && itemByKey[ik]) s.item_id = itemByKey[ik];
+        var uk = str_(s.supplier_id).toLowerCase();
+        if (uk && userByKey[uk]) s.supplier_id = userByKey[uk];
+      });
+    }
+    return rows;
   },
   /** Appends many rows in ONE setValues call, preserving order */
   append: function (name, objs) {
@@ -542,7 +690,7 @@ var Service = {
     var summary = {}; // key item|server
     items.forEach(function (i) {
       var srv = i.server === 'Server 1' || !i.server ? CONFIG.SERVER_NAME : i.server;
-      summary[i.item_id] = { item_id: i.item_id, item_name: i.item_name, server: srv, category: i.category,
+      summary[i.item_id] = { item_id: i.item_id, item_name: i.item_name, server: srv, category: i.category, unit: i.unit || 'ชิ้น',
         has_custom_option: i.has_custom_option, is_active: i.is_active, STOCKED: 0, AVAILABLE: 0, RESERVED: 0, SOLD: 0, WITHDRAWN: 0, suppliers: {} };
     });
     stock.forEach(function (s) {
@@ -641,7 +789,7 @@ var Service = {
       var k = variantKey_(s), it = items[s.item_id] || {};
       var q = queues[k];
       if (!q) {
-        q = queues[k] = { key: k, item_id: s.item_id, item_name: it.item_name || s.item_id, category: it.category || '',
+        q = queues[k] = { key: k, item_id: s.item_id, item_name: it.item_name || s.item_id, category: it.category || '', unit: it.unit || 'ชิ้น',
           has_custom_option: !!it.has_custom_option, variant: s.custom_note || '', pieces: 0, lots: [], _idx: {} };
         list.push(q);
       }
@@ -777,6 +925,7 @@ var Service = {
         has_custom_option: !!it.has_custom_option,
         image_url: it.image_url || '',
         description: it.description || '',
+        unit: it.unit || defaultUnitForName_(it.item_name),
         available_count: counts[it.item_id] || 0,
         variants: it.has_custom_option ? list : []
       };
@@ -801,6 +950,7 @@ var Service = {
     var items = Db.all('Master_Items');
     var img = p.image_url !== undefined ? resolveImageInput_(p.image_url, 'item') : null;
     var desc = p.description !== undefined ? str_(p.description).slice(0, 300) : null;
+    var unitVal = p.unit !== undefined ? str_(p.unit).slice(0, 30) : null;
     var data = { item_name: name, category: str_(p.category).slice(0, 50), server: server, has_custom_option: !!p.has_custom_option };
     if (p.item_id) {
       var it = items.filter(function (i) { return i.item_id === p.item_id; })[0];
@@ -814,13 +964,15 @@ var Service = {
       Object.keys(data).forEach(function (k) { it[k] = data[k]; });
       if (img !== null) it.image_url = img;
       if (desc !== null) it.description = desc;
+      if (unitVal !== null) it.unit = unitVal || defaultUnitForName_(name);
       Db.writeRow('Master_Items', it._row, it);
       return stripRow_(it);
     }
     var dup = items.some(function (i) { return i.item_name === name && i.server === server; });
     if (dup) throw ApiError_('มีไอเทมนี้ในเกมนี้แล้ว', 'CONFLICT');
     var row = { item_id: newUid_('I'), item_name: data.item_name, category: data.category, server: data.server,
-      has_custom_option: data.has_custom_option, is_active: true, image_url: img || '', description: desc || '' };
+      has_custom_option: data.has_custom_option, is_active: true, image_url: img || '', description: desc || '',
+      unit: unitVal || defaultUnitForName_(data.item_name) };
     Db.append('Master_Items', [row]);
     return row;
   },
@@ -952,6 +1104,23 @@ function indexBy_(arr, key) { var m = {}; arr.forEach(function (x) { m[x[key]] =
 function sumBy_(arr, key) { return arr.reduce(function (a, x) { return a + x[key]; }, 0); }
 function logRow_(uid, action, actor, note, ts) {
   return { log_id: newUid_('L'), stock_uid: uid, action: action, actor_id: actor, timestamp: ts || nowIso_(), note: note };
+}
+function defaultUnitForName_(name) {
+  var n = str_(name).toLowerCase();
+  if (/\balz\b/.test(n)) return 'M';
+  if (/safeguard|ใบกันแตก/.test(n)) return 'ใบ';
+  if (/rw3|blue|รถ|bike/.test(n)) return 'คัน';
+  if (/core/.test(n)) return 'ก้อน';
+  return 'ชิ้น';
+}
+function normalizeStatus_(raw) {
+  var s = str_(raw).toUpperCase();
+  if (s === 'STOCKED' || s === 'ในคลัง' || s === 'คลัง') return STATUS.STOCKED;
+  if (s === 'AVAILABLE' || s === 'รอขาย' || s === 'พร้อมขาย' || s === 'ว่าง') return STATUS.AVAILABLE;
+  if (s === 'RESERVED' || s === 'ติดจอง' || s === 'จอง') return STATUS.RESERVED;
+  if (s === 'SOLD' || s === 'ขายแล้ว' || s === 'ขาย') return STATUS.SOLD;
+  if (s === 'WITHDRAWN' || s === 'ถอน' || s === 'ถอนออก') return STATUS.WITHDRAWN;
+  return s || STATUS.AVAILABLE;
 }
 function mediaCmp_(a, b) {
   var sa = Number(a.sort_order) || 0, sb = Number(b.sort_order) || 0;

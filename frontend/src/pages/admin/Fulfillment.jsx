@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ChevronUp, ChevronDown, ChevronsUp, ChevronsDown, Pencil, Trash2, Swords, CheckCheck, RotateCcw, RefreshCw, ListOrdered, ClipboardCheck } from 'lucide-react';
 import { api } from '../../services/api.js';
 import { Button, Card, Confirm, ErrorBox, QtyInput, Spinner, useAsync, useToast } from '../../components/ui.jsx';
-import { fmtDate } from '../../utils/format.js';
+import { fmtDate, fmtUnit } from '../../utils/format.js';
 
 const iconBtn = 'p-1.5 rounded-md text-slate-400 hover:text-slate-100 hover:bg-ink-600 transition active:scale-90 disabled:opacity-30 disabled:pointer-events-none';
 const qLabel = (q) => `${q.item_name}${q.variant ? ` ${q.variant}` : ''}`;
@@ -79,8 +79,8 @@ export default function Fulfillment() {
                       <span className="text-[11px] text-slate-500 tabular-nums shrink-0">{x.lots.length} คิว</span>
                     </div>
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-gold-400">{x.variant || (x.has_custom_option ? 'ไม่ระบุรุ่น' : '')}</span>
-                      <span className="text-slate-500 tabular-nums">{x.pieces} ชิ้น</span>
+                      <span className="text-gold-400">{x.variant || ''}</span>
+                      <span className="text-slate-500 tabular-nums">{x.pieces} {fmtUnit(x.unit)}</span>
                     </div>
                   </button>
                 </li>
@@ -107,13 +107,13 @@ export default function Fulfillment() {
                         <button key={k} type="button" onClick={() => setMark(k)} className={`px-3 rounded-md text-xs font-semibold transition ${mark === k ? 'bg-arcane-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>{t}</button>
                       ))}
                     </div>
-                    <Button variant="gold" disabled={!(Number(qty) > 0)} onClick={() => setDlg({ type: 'sell' })}><Swords size={16} />{mark === 'SOLD' ? 'ขาย' : 'จอง'} {Math.min(Number(qty) || 0, q.pieces)} ชิ้น</Button>
+                    <Button variant="gold" disabled={!(Number(qty) > 0)} onClick={() => setDlg({ type: 'sell' })}><Swords size={16} />{mark === 'SOLD' ? 'ขาย' : 'จอง'} {Math.min(Number(qty) || 0, q.pieces)} {fmtUnit(q.unit)}</Button>
                   </div>
                 </div>
               </Card>
 
               {/* the queue itself */}
-              <Card title={`ลำดับคิว · ${q.lots.length} คิว / ${q.pieces} ชิ้น`} delay={2}>
+              <Card title={`ลำดับคิว · ${q.lots.length} คิว / ${q.pieces} ${fmtUnit(q.unit)}`} delay={2}>
                 <ol className="space-y-1.5">
                   {q.lots.map((l, i) => {
                     const n = take[l.lot_id]; const b = (d) => busy === `${l.lot_id}:${d}`;
